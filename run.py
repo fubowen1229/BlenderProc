@@ -50,9 +50,9 @@ if "custom_blender_path" not in setup_config:
         blender_install_path = "blender"
 
     # Determine configured version
-    # right new only support blender-2.83.2
+    # right now only support blender-2.83.2 # 2.83.9 for me
     major_version = "2.83"
-    minor_version = "2"
+    minor_version = "9"
     blender_version = "blender-{}.{}".format(major_version, minor_version)
     if platform == "linux" or platform == "linux2":
         blender_version += "-linux64"
@@ -70,7 +70,7 @@ if "custom_blender_path" not in setup_config:
     if os.path.exists(blender_path) and args.reinstall_blender:
         print("Removing existing blender installation")
         shutil.rmtree(blender_path)
-
+    
     # Download blender if it not already exists
     if not os.path.exists(blender_path):
         if version_info.major != 3:
@@ -158,7 +158,7 @@ general_required_packages = ["pyyaml==5.1.2", "Sphinx==1.6.5"]
 required_packages = general_required_packages
 if "pip" in setup_config:
     required_packages += setup_config["pip"]
-
+'''
 # Install required packages
 if len(required_packages) > 0:
     # Install pip
@@ -227,7 +227,7 @@ if len(required_packages) > 0:
         if not already_installed or args.reinstall_packages:
             subprocess.Popen([python_bin, "-m", "pip", "install", package, "--target", packages_path,
                               "--upgrade"], env=dict(os.environ, PYTHONPATH=packages_path)).wait()
-
+'''
 # Run script
 if platform == "linux" or platform == "linux2":
     blender_run_path = os.path.join(blender_path, "blender")

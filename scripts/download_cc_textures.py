@@ -22,13 +22,14 @@ if __name__ == "__main__":
     if not os.path.exists(cc_texture_dir):
         os.makedirs(cc_texture_dir)
     else:
+        print("The folder already exists!")
         raise Exception("The folder already exists!")
-
+    
     # download the csv file, which contains all the download links
     csv_url = "https://cc0textures.com/api/v1/downloads_csv"
     csv_file_path = os.path.join(cc_texture_dir, "full_info.csv")
     urlretrieve(csv_url, csv_file_path)
-
+    
     # extract the download links with the asset name
     data = {}
     with open(csv_file_path, "r") as csv_file:
@@ -55,9 +56,12 @@ if __name__ == "__main__":
         if not os.path.exists(current_folder):
             os.makedirs(current_folder)
         current_file_path = os.path.join(current_folder, "{}.zip".format(asset))
-        urlretrieve(link, current_file_path)
-        subprocess.call(["unzip {} -d {}> /dev/null".format(current_file_path, current_folder)], shell=True)
-        os.remove(current_file_path)
+        try:
+            urlretrieve(link, current_file_path)
+            subprocess.call(["unzip {} -d {}> /dev/null".format(current_file_path, current_folder)], shell=True)
+            os.remove(current_file_path)
+        except:
+            print("HTTP ERROR: ", link)
 
     print("Done downloading textures, saved in {}".format(cc_texture_dir))
 

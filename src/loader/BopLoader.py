@@ -75,7 +75,7 @@ class BopLoader(LoaderInterface):
         
         print("bob: {}, dataset_path: {}".format(self.bop_dataset_path, datasets_path))
         print("dataset: {}".format(dataset))
-
+        
         try:
             from bop_toolkit_lib import dataset_params, inout
         except ImportError as error:
