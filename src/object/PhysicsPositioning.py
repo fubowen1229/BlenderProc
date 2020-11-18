@@ -210,6 +210,7 @@ class PhysicsPositioning(Module):
                 break
             elif current_time + check_object_interval >= max_simulation_time:
                 print("Stopping simulation as configured max_simulation_time has been reached")
+
         return new_poses
 
     def _get_pose(self):

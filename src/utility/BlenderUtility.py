@@ -163,7 +163,15 @@ def check_intersection(obj, obj2, cache = None):
         co_1 = co_1.lerp(co_mid, EPS_CENTER) + no_mid
         co_2 = co_2.lerp(co_mid, EPS_CENTER) + no_mid
 
-        t, co, no, index = ray_cast(co_1, (co_2 - co_1).normalized(), distance=ed.calc_length())
+        t, co, no, index = ray_cast(co_1, (co_2 - co_1).normalized(), distance=ed.calc_length())    # Parameters:
+                                                                                                        # origin
+                                                                                                        # direction
+                                                                                                        # distance: max distance
+                                                                                                    # Return:
+                                                                                                        # result: bool
+                                                                                                        # location: hit location
+                                                                                                        # normal: face normal
+                                                                                                        # index: face index
         if index != -1:
             intersect = True
             break
