@@ -336,7 +336,7 @@ class BopWriter(WriterInterface):
                 self.chunk_gt_tpath.format(chunk_id=curr_chunk_id), keys_to_int=True)
             chunk_camera = load_json(
                 self.chunk_camera_tpath.format(chunk_id=curr_chunk_id), keys_to_int=True)
-
+        
         # Go through all frames.
         num_new_frames = bpy.context.scene.frame_end - bpy.context.scene.frame_start
         for frame_id in range(bpy.context.scene.frame_start, bpy.context.scene.frame_end):
