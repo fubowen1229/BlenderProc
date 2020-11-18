@@ -16,7 +16,7 @@ from src.utility.Config import Config
 class BopLoader(LoaderInterface):
     """ Loads the 3D models of any BOP dataset and allows replicating BOP scenes
     
-    - Interfaces with the bob_toolkit, allows loading of train, val and test splits
+    - Interfaces with the bop_toolkit, allows loading of train, val and test splits
     - Relative camera poses are loaded/computed with respect to a reference model
     - Sets real camera intrinsics
 
