@@ -1,0 +1,282 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.writer.BopWriter module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.writer.BopWriter">
+<span id="src-writer-bopwriter-module"></span><h1>src.writer.BopWriter module<a class="headerlink" href="#module-src.writer.BopWriter" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.writer.BopWriter.BopWriter">
+<em class="property">class </em><code class="descclassname">src.writer.BopWriter.</code><code class="descname">BopWriter</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.writer.WriterInterface.html#src.writer.WriterInterface.WriterInterface" title="src.writer.WriterInterface.WriterInterface"><code class="xref py py-class docutils literal"><span class="pre">src.writer.WriterInterface.WriterInterface</span></code></a></p>
+<dl class="docutils">
+<dt>Saves the synthesized dataset in the BOP format. The dataset is split</dt>
+<dd>into chunks which are saved as individual “scenes”. For more details
+about the BOP format, visit the BOP toolkit docs:
+<a class="reference external" href="https://github.com/thodan/bop_toolkit/blob/master/docs/bop_datasets_format.md">https://github.com/thodan/bop_toolkit/blob/master/docs/bop_datasets_format.md</a></dd>
+</dl>
+<p><strong>Attributes per object</strong>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Keyword</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>dataset</td>
+<td>Annotations for objects of this dataset will be saved. Type: string.</td>
+</tr>
+<tr class="row-odd"><td>append_to_existing_output</td>
+<td>If true, the new frames will be appended to the existing ones.</td>
+</tr>
+<tr class="row-even"><td>Type: bool. Default: False</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>ignore_dist_thres</td>
+<td>Distance in meters between camera and object after which it is ignored. Mostly due to</td>
+</tr>
+<tr class="row-even"><td>failed physics. Type: float. Default: 5.</td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter._get_camera_attribute">
+<code class="descname">_get_camera_attribute</code><span class="sig-paren">(</span><em>cam_pose</em>, <em>attribute_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter._get_camera_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter._get_camera_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the requested attribute for the given object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cam_pose</strong> – camera pose</li>
+<li><strong>attribute_name</strong> – The attribute name.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The attribute value.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter._get_frame_camera">
+<code class="descname">_get_frame_camera</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter._get_frame_camera"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter._get_frame_camera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns camera parameters for the active camera.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter._get_frame_gt">
+<code class="descname">_get_frame_gt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter._get_frame_gt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter._get_frame_gt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns GT annotations for the active camera.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A list of GT annotations.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter._get_object_attribute">
+<code class="descname">_get_object_attribute</code><span class="sig-paren">(</span><em>object</em>, <em>attribute_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter._get_object_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter._get_object_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the requested attribute for the given object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>object</strong> – The mesh object.</li>
+<li><strong>attribute_name</strong> – The attribute name.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The attribute value.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter._write_camera">
+<code class="descname">_write_camera</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter._write_camera"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter._write_camera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes camera.json into dataset_dir.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter._write_frames">
+<code class="descname">_write_frames</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter._write_frames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter._write_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes images, GT annotations and camera info.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter.get_camK_from_blender_attributes">
+<code class="descname">get_camK_from_blender_attributes</code><span class="sig-paren">(</span><em>cam_pose</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter.get_camK_from_blender_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter.get_camK_from_blender_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs the camera matrix K.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cam_pose</strong> – Camera info.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">camera matrix K as 9x1 list.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.BopWriter.BopWriter.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#BopWriter.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.BopWriter.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores frames and annotations for objects from the specified dataset.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="src.writer.BopWriter.load_json">
+<code class="descclassname">src.writer.BopWriter.</code><code class="descname">load_json</code><span class="sig-paren">(</span><em>path</em>, <em>keys_to_int=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#load_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.load_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads content of a JSON file.
+From the BOP toolkit (<a class="reference external" href="https://github.com/thodan/bop_toolkit">https://github.com/thodan/bop_toolkit</a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> – Path to the JSON file.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Content of the loaded JSON file.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.writer.BopWriter.save_depth">
+<code class="descclassname">src.writer.BopWriter.</code><code class="descname">save_depth</code><span class="sig-paren">(</span><em>path</em>, <em>im</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#save_depth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.save_depth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves a depth image (16-bit) to a PNG file.
+From the BOP toolkit (<a class="reference external" href="https://github.com/thodan/bop_toolkit">https://github.com/thodan/bop_toolkit</a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> – Path to the output depth image file.</li>
+<li><strong>im</strong> – ndarray with the depth image to save.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="src.writer.BopWriter.save_json">
+<code class="descclassname">src.writer.BopWriter.</code><code class="descname">save_json</code><span class="sig-paren">(</span><em>path</em>, <em>content</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/BopWriter.html#save_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.BopWriter.save_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the content to a JSON file in a human-friendly format.
+From the BOP toolkit (<a class="reference external" href="https://github.com/thodan/bop_toolkit">https://github.com/thodan/bop_toolkit</a>).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> – Path to the output JSON file.</li>
+<li><strong>content</strong> – Dictionary/list to save.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.writer.BopWriter.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

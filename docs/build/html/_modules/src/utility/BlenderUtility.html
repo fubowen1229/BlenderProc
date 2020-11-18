@@ -1,0 +1,463 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.utility.BlenderUtility &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.utility.BlenderUtility</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">bpy</span>
+<span class="kn">import</span> <span class="nn">bmesh</span>
+<span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="n">Vector</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="triangulate"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.triangulate">[docs]</a><span class="k">def</span> <span class="nf">triangulate</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">triangulate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">apply_modifiers</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :obj: object to triangulate, must be a mesh</span>
+<span class="sd">    :transform: transform to world coordinates if True</span>
+<span class="sd">    :triangulate: perform triangulation if True</span>
+<span class="sd">    :apply_modifiers: applies modifiers if any and True</span>
+<span class="sd">    Returns a transformed, triangulated copy of the mesh (much smaller in size and can be used for quicker maths)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;MESH&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">apply_modifiers</span> <span class="ow">and</span> <span class="n">obj</span><span class="o">.</span><span class="n">modifiers</span><span class="p">:</span>
+        <span class="n">me</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">to_mesh</span><span class="p">(</span><span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="s1">&#39;PREVIEW&#39;</span><span class="p">,</span> <span class="n">calc_tessface</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">bm</span> <span class="o">=</span> <span class="n">bmesh</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+        <span class="n">bm</span><span class="o">.</span><span class="n">from_mesh</span><span class="p">(</span><span class="n">me</span><span class="p">)</span>
+        <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">me</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">me</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;EDIT&#39;</span><span class="p">:</span>
+            <span class="n">bm_orig</span> <span class="o">=</span> <span class="n">bmesh</span><span class="o">.</span><span class="n">from_edit_mesh</span><span class="p">(</span><span class="n">me</span><span class="p">)</span>
+            <span class="n">bm</span> <span class="o">=</span> <span class="n">bm_orig</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bm</span> <span class="o">=</span> <span class="n">bmesh</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+            <span class="n">bm</span><span class="o">.</span><span class="n">from_mesh</span><span class="p">(</span><span class="n">me</span><span class="p">)</span>
+
+    <span class="c1"># Remove custom data layers to save memory</span>
+    <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="p">(</span><span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="p">,</span> <span class="n">bm</span><span class="o">.</span><span class="n">edges</span><span class="p">,</span> <span class="n">bm</span><span class="o">.</span><span class="n">verts</span><span class="p">,</span> <span class="n">bm</span><span class="o">.</span><span class="n">loops</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">layers_name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">layers_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+                <span class="n">layers</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">elem</span><span class="o">.</span><span class="n">layers</span><span class="p">,</span> <span class="n">layers_name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">layers</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">transform</span><span class="p">:</span>
+        <span class="n">bm</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">matrix_world</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">triangulate</span><span class="p">:</span>
+        <span class="n">bmesh</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">triangulate</span><span class="p">(</span><span class="n">bm</span><span class="p">,</span> <span class="n">faces</span><span class="o">=</span><span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">bm</span></div>
+
+<div class="viewcode-block" id="local_to_world"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.local_to_world">[docs]</a><span class="k">def</span> <span class="nf">local_to_world</span><span class="p">(</span><span class="n">cords</span><span class="p">,</span> <span class="n">world</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param cords: coordinates a tuple of 3 values for x,y,z</span>
+<span class="sd">    :param world: world matrix &lt;- transformation matrix</span>
+<span class="sd">    Returns a cords transformed to the given transformation world matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="get_bounds"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.get_bounds">[docs]</a>    <span class="k">return</span> <span class="p">[</span><span class="n">world</span> <span class="o">@</span> <span class="n">Vector</span><span class="p">(</span><span class="n">cord</span><span class="p">)</span> <span class="k">for</span> <span class="n">cord</span> <span class="ow">in</span> <span class="n">cords</span><span class="p">]</span></div>
+
+<span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param obj: a mesh object</span>
+<span class="sd">    :returns [8x[3xfloat]] the object aligned bounding box coordinates in world coordinates</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">local_to_world</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">bound_box</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">matrix_world</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="check_bb_intersection"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.check_bb_intersection">[docs]</a><span class="k">def</span> <span class="nf">check_bb_intersection</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span><span class="n">obj2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks if there is a bounding box collision, these don&#39;t have to be axis-aligned, but if they are not:</span>
+<span class="sd">        The surrounding/including axis-aligned bounding box is calculated and used to check the intersection</span>
+
+<span class="sd">    :param obj1: object 1  to check for intersection, must be a mesh</span>
+<span class="sd">    :param obj2: object 2  to check for intersection, must be a mesh</span>
+<span class="sd">    returns a boolean</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">b1w</span> <span class="o">=</span> <span class="n">get_bounds</span><span class="p">(</span><span class="n">obj1</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">min_and_max_point</span><span class="p">(</span><span class="n">bb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the minimum and maximum point of the bounding box</span>
+<span class="sd">        :param bb: bounding box</span>
+<span class="sd">        :return: min, max</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bb</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># get min and max point of the axis-aligned bounding box</span>
+    <span class="n">min_b1</span><span class="p">,</span> <span class="n">max_b1</span> <span class="o">=</span> <span class="n">min_and_max_point</span><span class="p">(</span><span class="n">b1w</span><span class="p">)</span>
+    <span class="n">b2w</span> <span class="o">=</span> <span class="n">get_bounds</span><span class="p">(</span><span class="n">obj2</span><span class="p">)</span>
+    <span class="c1"># get min and max point of the axis-aligned bounding box</span>
+    <span class="n">min_b2</span><span class="p">,</span> <span class="n">max_b2</span> <span class="o">=</span> <span class="n">min_and_max_point</span><span class="p">(</span><span class="n">b2w</span><span class="p">)</span>
+    <span class="n">collide</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">min_b1_val</span><span class="p">,</span> <span class="n">max_b1_val</span><span class="p">,</span> <span class="n">min_b2_val</span><span class="p">,</span> <span class="n">max_b2_val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">min_b1</span><span class="p">,</span> <span class="n">max_b1</span><span class="p">,</span> <span class="n">min_b2</span><span class="p">,</span> <span class="n">max_b2</span><span class="p">):</span>
+        <span class="c1"># inspired by this:</span>
+        <span class="c1"># https://stackoverflow.com/questions/20925818/algorithm-to-check-if-two-boxes-overlap</span>
+        <span class="c1"># Checks in each dimension, if there is an overlap if this happens it must be an overlap in 3D, too.</span>
+        <span class="k">def</span> <span class="nf">is_overlapping_1D</span><span class="p">(</span><span class="n">x_min_1</span><span class="p">,</span> <span class="n">x_max_1</span><span class="p">,</span> <span class="n">x_min_2</span><span class="p">,</span> <span class="n">x_max_2</span><span class="p">):</span>
+            <span class="c1"># returns true if the min and max values are overlapping</span>
+            <span class="k">return</span> <span class="n">x_max_1</span> <span class="o">&gt;=</span> <span class="n">x_min_2</span> <span class="ow">and</span> <span class="n">x_max_2</span> <span class="o">&gt;=</span> <span class="n">x_min_1</span>
+        <span class="n">collide</span> <span class="o">=</span> <span class="n">collide</span> <span class="ow">and</span> <span class="n">is_overlapping_1D</span><span class="p">(</span><span class="n">min_b1_val</span><span class="p">,</span> <span class="n">max_b1_val</span><span class="p">,</span> <span class="n">min_b2_val</span><span class="p">,</span> <span class="n">max_b2_val</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">collide</span></div>
+
+
+<div class="viewcode-block" id="check_intersection"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.check_intersection">[docs]</a><span class="k">def</span> <span class="nf">check_intersection</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="n">cache</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks if the two objects are colliding, the code is from:</span>
+<span class="sd">        https://blender.stackexchange.com/questions/9073/how-to-check-if-two-meshes-intersect-in-python</span>
+
+<span class="sd">    The check is performed along the edges from the object, which has less edges.</span>
+
+<span class="sd">    :param obj1: object 1 to check for intersection, must be a mesh</span>
+<span class="sd">    :param obj2: object 2 to check for intersection, must be a mesh</span>
+<span class="sd">    returns a boolean and the cache of the objects, which already have been triangulated</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">obj</span> <span class="o">!=</span> <span class="n">obj2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+    
+    <span class="k">assert</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">({}))</span> <span class="c1"># cache must be a dict</span>
+
+    <span class="c1"># Triangulate (Load from cache if available)</span>
+    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="n">bm</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bm</span> <span class="o">=</span> <span class="n">triangulate</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">triangulate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bm</span>
+
+    <span class="k">if</span> <span class="n">obj2</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="n">bm2</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">obj2</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bm2</span> <span class="o">=</span> <span class="n">triangulate</span><span class="p">(</span><span class="n">obj2</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">triangulate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">obj2</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">bm2</span>
+
+    <span class="c1"># If bm has more edges, use bm2 instead for looping over its edges</span>
+    <span class="c1"># (so we cast less rays from the simpler object to the more complex object)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bm</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">bm2</span><span class="o">.</span><span class="n">edges</span><span class="p">):</span>
+        <span class="n">bm2</span><span class="p">,</span> <span class="n">bm</span> <span class="o">=</span> <span class="n">bm</span><span class="p">,</span> <span class="n">bm2</span>
+
+    <span class="c1"># Create a real mesh </span>
+    <span class="n">scene</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span>
+    <span class="n">me_tmp</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;~temp~&quot;</span><span class="p">)</span>
+    <span class="n">bm2</span><span class="o">.</span><span class="n">to_mesh</span><span class="p">(</span><span class="n">me_tmp</span><span class="p">)</span>
+    <span class="n">bm2</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
+    <span class="n">obj_tmp</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">me_tmp</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">object_data</span><span class="o">=</span><span class="n">me_tmp</span><span class="p">)</span>
+    <span class="n">scene</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">obj_tmp</span><span class="p">)</span>
+    <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">view_layer</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    
+    <span class="c1"># this ray_cast is performed in object coordinates, but both objects were moved in world coordinates</span>
+    <span class="c1"># so the world_matrix is the identity matrix</span>
+    <span class="n">ray_cast</span> <span class="o">=</span> <span class="n">obj_tmp</span><span class="o">.</span><span class="n">ray_cast</span>
+
+    <span class="n">intersect</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">EPS_NORMAL</span> <span class="o">=</span> <span class="mf">0.000001</span>
+    <span class="n">EPS_CENTER</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># should always be bigger</span>
+
+    <span class="c1">#for ed in me_tmp.edges:</span>
+    <span class="k">for</span> <span class="n">ed</span> <span class="ow">in</span> <span class="n">bm</span><span class="o">.</span><span class="n">edges</span><span class="p">:</span>
+        <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span> <span class="o">=</span> <span class="n">ed</span><span class="o">.</span><span class="n">verts</span>
+
+        <span class="c1"># setup the edge with an offset</span>
+        <span class="n">co_1</span> <span class="o">=</span> <span class="n">v1</span><span class="o">.</span><span class="n">co</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">co_2</span> <span class="o">=</span> <span class="n">v2</span><span class="o">.</span><span class="n">co</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">co_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">co_1</span> <span class="o">+</span> <span class="n">co_2</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>
+        <span class="n">no_mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">v1</span><span class="o">.</span><span class="n">normal</span> <span class="o">+</span> <span class="n">v2</span><span class="o">.</span><span class="n">normal</span><span class="p">)</span><span class="o">.</span><span class="n">normalized</span><span class="p">()</span> <span class="o">*</span> <span class="n">EPS_NORMAL</span>
+        <span class="c1"># interpolation between co_1 and co_mid, with a small value to get away from the original co_1</span>
+        <span class="c1"># plus the average direction of the normal to get away from the object itself</span>
+        <span class="n">co_1</span> <span class="o">=</span> <span class="n">co_1</span><span class="o">.</span><span class="n">lerp</span><span class="p">(</span><span class="n">co_mid</span><span class="p">,</span> <span class="n">EPS_CENTER</span><span class="p">)</span> <span class="o">+</span> <span class="n">no_mid</span>
+        <span class="n">co_2</span> <span class="o">=</span> <span class="n">co_2</span><span class="o">.</span><span class="n">lerp</span><span class="p">(</span><span class="n">co_mid</span><span class="p">,</span> <span class="n">EPS_CENTER</span><span class="p">)</span> <span class="o">+</span> <span class="n">no_mid</span>
+
+        <span class="n">t</span><span class="p">,</span> <span class="n">co</span><span class="p">,</span> <span class="n">no</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="n">ray_cast</span><span class="p">(</span><span class="n">co_1</span><span class="p">,</span> <span class="p">(</span><span class="n">co_2</span> <span class="o">-</span> <span class="n">co_1</span><span class="p">)</span><span class="o">.</span><span class="n">normalized</span><span class="p">(),</span> <span class="n">distance</span><span class="o">=</span><span class="n">ed</span><span class="o">.</span><span class="n">calc_length</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">intersect</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">break</span>
+
+    <span class="n">scene</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">obj_tmp</span><span class="p">)</span>
+    <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">obj_tmp</span><span class="p">)</span>
+    <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">me_tmp</span><span class="p">)</span>
+
+    <span class="c1"># new method to udpate scene</span>
+    <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">view_layer</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">intersect</span><span class="p">,</span> <span class="n">cache</span></div>
+
+<div class="viewcode-block" id="check_if_uv_coordinates_are_set"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.check_if_uv_coordinates_are_set">[docs]</a><span class="k">def</span> <span class="nf">check_if_uv_coordinates_are_set</span><span class="p">(</span><span class="n">obj</span><span class="p">:</span> <span class="n">bpy</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param obj: should be an object, which has a mesh</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">uv_layers</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;This only support objects which only have one uv layer.&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">uv_layers</span><span class="p">:</span>
+        <span class="n">max_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">uv_coords</span><span class="o">.</span><span class="n">uv</span><span class="p">)</span> <span class="k">for</span> <span class="n">uv_coords</span> <span class="ow">in</span> <span class="n">layer</span><span class="o">.</span><span class="n">data</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">max_val</span> <span class="o">&gt;</span> <span class="mf">1e-7</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="vector_to_euler"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.vector_to_euler">[docs]</a><span class="k">def</span> <span class="nf">vector_to_euler</span><span class="p">(</span><span class="n">vector</span><span class="p">,</span> <span class="n">vector_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param vector: UP (for MESH objs) of FORWARD (for LIGHT/CAMERA objs) vector. Type: mathutils Vector.</span>
+<span class="sd">    :param vector_type: Type of an input vector: UP or FORWARD. Type: string.</span>
+<span class="sd">    :return: Corresponding Euler angles XYZ-triplet. Type: mathutils Euler.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Check vector type</span>
+    <span class="k">if</span> <span class="n">vector_type</span> <span class="o">==</span> <span class="s2">&quot;UP&quot;</span><span class="p">:</span>
+        <span class="c1"># UP vectors are used for MESH type objects</span>
+        <span class="n">euler_angles</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">to_track_quat</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_euler</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">vector_type</span> <span class="o">==</span> <span class="s2">&quot;FORWARD&quot;</span><span class="p">:</span>
+        <span class="c1"># FORWARD vectors are used for LIGHT and CAMERA type objects</span>
+        <span class="n">euler_angles</span> <span class="o">=</span> <span class="n">vector</span><span class="o">.</span><span class="n">to_track_quat</span><span class="p">(</span><span class="s1">&#39;-Z&#39;</span><span class="p">,</span> <span class="s1">&#39;Y&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_euler</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Unknown vector type: &quot;</span> <span class="o">+</span> <span class="n">vector_type</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">euler_angles</span></div>
+
+<div class="viewcode-block" id="add_object_only_with_vertices"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.add_object_only_with_vertices">[docs]</a><span class="k">def</span> <span class="nf">add_object_only_with_vertices</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;NewVertexObject&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a new object with the given vertices, no edges or faces are generated.</span>
+
+<span class="sd">    :param vertices: [[float, float, float]] list of vertices</span>
+<span class="sd">    :param name: str name of the new object</span>
+<span class="sd">    :return the generated obj</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;mesh&#39;</span><span class="p">)</span>
+    <span class="c1"># create new object</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+    <span class="c1"># TODO check if this always works?</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Collection&#39;</span><span class="p">)</span>
+    <span class="c1"># link object in collection</span>
+    <span class="n">col</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="c1"># convert vertices to mesh</span>
+    <span class="n">bm</span> <span class="o">=</span> <span class="n">bmesh</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vertices</span><span class="p">:</span>
+        <span class="n">bm</span><span class="o">.</span><span class="n">verts</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">to_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">obj</span></div>
+
+<div class="viewcode-block" id="add_object_only_with_direction_vectors"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.add_object_only_with_direction_vectors">[docs]</a><span class="k">def</span> <span class="nf">add_object_only_with_direction_vectors</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">normals</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;NewDirectionObject&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a new object with the given vertices, no edges or faces are generated.</span>
+
+<span class="sd">    :param vertices: [[float, float, float]] list of vertices</span>
+<span class="sd">    :param name: str name of the new object</span>
+<span class="sd">    :return the generated obj</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">normals</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The lenght of the vertices and normals is not equal!&quot;</span><span class="p">)</span>
+
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;mesh&#39;</span><span class="p">)</span>
+    <span class="c1"># create new object</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+    <span class="c1"># TODO check if this always works?</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Collection&#39;</span><span class="p">)</span>
+    <span class="c1"># link object in collection</span>
+    <span class="n">col</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="c1"># convert vertices to mesh</span>
+    <span class="n">bm</span> <span class="o">=</span> <span class="n">bmesh</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">normals</span><span class="p">):</span>
+        <span class="n">v1</span> <span class="o">=</span> <span class="n">bm</span><span class="o">.</span><span class="n">verts</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="n">new_vert</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">n</span> <span class="o">*</span> <span class="n">radius</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">bm</span><span class="o">.</span><span class="n">verts</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">new_vert</span><span class="p">)</span>
+        <span class="n">bm</span><span class="o">.</span><span class="n">edges</span><span class="o">.</span><span class="n">new</span><span class="p">([</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">])</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">to_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">obj</span></div>
+
+
+<div class="viewcode-block" id="add_cube_based_on_bb"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.add_cube_based_on_bb">[docs]</a><span class="k">def</span> <span class="nf">add_cube_based_on_bb</span><span class="p">(</span><span class="n">bouding_box</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;NewCube&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generates a cube based on the given bounding box, the bounding_box can be generated with our get_bounds(obj) fct.</span>
+
+<span class="sd">    :param bounding_box: bound_box [8x[3xfloat]], with 8 vertices for each corner</span>
+<span class="sd">    :param name: name of the new cube</span>
+<span class="sd">    :return the generated object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bouding_box</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">8</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The amount of vertices is wrong for this bounding box!&quot;</span><span class="p">)</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;mesh&#39;</span><span class="p">)</span>
+    <span class="c1"># create new object</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+    <span class="c1"># TODO check if this always works?</span>
+    <span class="n">col</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;Collection&#39;</span><span class="p">)</span>
+    <span class="c1"># link object in collection</span>
+    <span class="n">col</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="c1"># convert vertices to mesh</span>
+    <span class="n">new_vertices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">bm</span> <span class="o">=</span> <span class="n">bmesh</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">bouding_box</span><span class="p">:</span>
+        <span class="n">new_vertices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bm</span><span class="o">.</span><span class="n">verts</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+    <span class="c1"># create all 6 surfaces, the ordering is depending on the ordering of the vertices in the bounding box</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">new</span><span class="p">([</span><span class="n">new_vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">new</span><span class="p">([</span><span class="n">new_vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">new</span><span class="p">([</span><span class="n">new_vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">new</span><span class="p">([</span><span class="n">new_vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">6</span><span class="p">]])</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">new</span><span class="p">([</span><span class="n">new_vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">faces</span><span class="o">.</span><span class="n">new</span><span class="p">([</span><span class="n">new_vertices</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">new_vertices</span><span class="p">[</span><span class="mi">7</span><span class="p">]])</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">to_mesh</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+    <span class="n">bm</span><span class="o">.</span><span class="n">free</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">obj</span></div>
+
+<div class="viewcode-block" id="get_all_mesh_objects"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.get_all_mesh_objects">[docs]</a><span class="k">def</span> <span class="nf">get_all_mesh_objects</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of all mesh objects in the scene</span>
+<span class="sd">    :return: a list of all mesh objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span> <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="s1">&#39;MESH&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="get_all_materials"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.get_all_materials">[docs]</a><span class="k">def</span> <span class="nf">get_all_materials</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of all materials used and unused</span>
+<span class="sd">    :return: a list of all materials</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="get_all_textures"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.get_all_textures">[docs]</a><span class="k">def</span> <span class="nf">get_all_textures</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a list of all textures.</span>
+<span class="sd">    :return: All textures. Type: list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">textures</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="load_image"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.load_image">[docs]</a><span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">num_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Load the image at the given path returns its pixels as a numpy array.</span>
+
+<span class="sd">    The alpha channel is neglected.</span>
+
+<span class="sd">    :param file_path: The path to the image.</span>
+<span class="sd">    :param num_channels: Number of channels to return.</span>
+<span class="sd">    :return: The numpy array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># load image with blender function</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">check_existing</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># convert image to proper size</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">channels</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">channels</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">pixels</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">channels</span><span class="p">)</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.png&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">file_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.jpg&#39;</span><span class="p">):</span>
+        <span class="c1"># convert the 0 to 1 space to 0 ... 255 and save it as uint8</span>
+        <span class="n">img</span> <span class="o">=</span> <span class="p">(</span><span class="n">img</span> <span class="o">*</span> <span class="mi">255</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">img</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="n">num_channels</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="get_bound_volume"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.get_bound_volume">[docs]</a><span class="k">def</span> <span class="nf">get_bound_volume</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Gets the volume of a possible orientated bounding box.</span>
+<span class="sd">    :param obj: Mesh object.</span>
+<span class="sd">    :return: volume of a bounding box.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bb</span> <span class="o">=</span> <span class="n">get_bounds</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="c1"># Search for the point which is the maximum distance away from the first point</span>
+    <span class="c1"># we call this first point min and the furthest away point max</span>
+    <span class="c1"># the vector between the two is a diagonal of the bounding box</span>
+    <span class="n">min_point</span><span class="p">,</span> <span class="n">max_point</span> <span class="o">=</span> <span class="n">bb</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="kc">None</span>
+    <span class="n">max_dist</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">point</span> <span class="ow">in</span> <span class="n">bb</span><span class="p">:</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="p">(</span><span class="n">point</span> <span class="o">-</span> <span class="n">min_point</span><span class="p">)</span><span class="o">.</span><span class="n">length</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="o">&gt;</span> <span class="n">max_dist</span><span class="p">:</span>
+            <span class="n">max_point</span> <span class="o">=</span> <span class="n">point</span>
+            <span class="n">max_dist</span> <span class="o">=</span> <span class="n">dist</span>
+    <span class="n">diag</span> <span class="o">=</span> <span class="n">max_point</span> <span class="o">-</span> <span class="n">min_point</span>
+    <span class="c1"># use the diagonal to calculate the volume of the box</span>
+    <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diag</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diag</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">diag</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="duplicate_objects"><a class="viewcode-back" href="../../../src.utility.BlenderUtility.html#src.utility.BlenderUtility.duplicate_objects">[docs]</a><span class="k">def</span> <span class="nf">duplicate_objects</span><span class="p">(</span><span class="n">objects</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates duplicates of objects, first duplicates are given name &lt;orignial_object_name&gt;.001</span>
+<span class="sd">    </span>
+<span class="sd">    :param objects: an object or a list of objects to be duplicated</span>
+<span class="sd">    :return: a list of objects</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objects</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">objects</span> <span class="o">=</span> <span class="p">[</span><span class="n">objects</span><span class="p">]</span>
+
+    <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">select_all</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;DESELECT&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">:</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">select_set</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">duplicate</span><span class="p">()</span>
+    <span class="n">duplicates</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">selected_objects</span>
+    <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">select_all</span><span class="p">(</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;DESELECT&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">duplicates</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

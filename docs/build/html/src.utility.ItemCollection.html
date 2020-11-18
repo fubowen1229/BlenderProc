@@ -1,0 +1,240 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.utility.ItemCollection module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.utility.ItemCollection">
+<span id="src-utility-itemcollection-module"></span><h1>src.utility.ItemCollection module<a class="headerlink" href="#module-src.utility.ItemCollection" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.utility.ItemCollection.ItemCollection">
+<em class="property">class </em><code class="descclassname">src.utility.ItemCollection.</code><code class="descname">ItemCollection</code><span class="sig-paren">(</span><em>add_item_func</em>, <em>default_item_parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Manages the reading and creation of multiple items (like light sources or cam poses) from config or file.</p>
+<dl class="method">
+<dt id="src.utility.ItemCollection.ItemCollection._collect_arguments_from_file">
+<code class="descname">_collect_arguments_from_file</code><span class="sig-paren">(</span><em>path</em>, <em>file_format</em>, <em>number_of_arguments</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection._collect_arguments_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection._collect_arguments_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads in all lines of the given file and returns them as a list of lists of arguments</p>
+<p>This method also checks is the lines match the configured file format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path</strong> – The path of the file.</li>
+<li><strong>file_format</strong> – Specifies how the arguments should be mapped to parameters.</li>
+<li><strong>number_of_arguments</strong> – The total number of arguments required per line.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of lists of arguments</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.utility.ItemCollection.ItemCollection._length_of_parameter">
+<code class="descname">_length_of_parameter</code><span class="sig-paren">(</span><em>parameter_name</em>, <em>number_of_arguments_per_parameter</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection._length_of_parameter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection._length_of_parameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns how many arguments the given parameter expects.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>parameter_name</strong> – The name of the parameter.</li>
+<li><strong>number_of_arguments_per_parameter</strong> – Dict where {key:value} pairs are {name of the parameter:expected number of arguments} pairs.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The expected number of arguments</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.utility.ItemCollection.ItemCollection._parse_arguments_from_file">
+<code class="descname">_parse_arguments_from_file</code><span class="sig-paren">(</span><em>arguments</em>, <em>file_format</em>, <em>number_of_arguments_per_parameter</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection._parse_arguments_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection._parse_arguments_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the parameters using the given arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>arguments</strong> – A list of arguments read in from the file.</li>
+<li><strong>file_format</strong> – Specifies how the arguments should be mapped to parameters.</li>
+<li><strong>number_of_arguments_per_parameter</strong> – A dicts which maps parameter names to their required number of arguments.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dict containing the parameters specified by the given arguments.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.utility.ItemCollection.ItemCollection._set_parameter_value">
+<code class="descname">_set_parameter_value</code><span class="sig-paren">(</span><em>data</em>, <em>parameter_name_parts</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection._set_parameter_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection._set_parameter_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the parameter inside the given nested dict</p>
+<p>({}, [“rotation”,”value”], 42) will result in:
+{</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>“rotation”: {</dt>
+<dd>“value”: 42</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> – The dict into which the parameter value should be written.</li>
+<li><strong>parameter_name_parts</strong> – A list of strings which will be used as keys when creating the nested dicts and setting the value.</li>
+<li><strong>value</strong> – The value to set</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.utility.ItemCollection.ItemCollection.add_item">
+<code class="descname">add_item</code><span class="sig-paren">(</span><em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection.add_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection.add_item" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a new item based on the given parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parameters</strong> – A dict specifying the parameters.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.utility.ItemCollection.ItemCollection.add_items_from_dicts">
+<code class="descname">add_items_from_dicts</code><span class="sig-paren">(</span><em>dicts</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection.add_items_from_dicts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection.add_items_from_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds items from a list of dicts.</p>
+<p>Every dict specifies the parameters of one new item.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dicts</strong> – The list of dicts.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.utility.ItemCollection.ItemCollection.add_items_from_file">
+<code class="descname">add_items_from_file</code><span class="sig-paren">(</span><em>path</em>, <em>file_format</em>, <em>number_of_arguments_per_parameter</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemCollection.html#ItemCollection.add_items_from_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemCollection.ItemCollection.add_items_from_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds one item per line of the given file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> – The path of the file to read.</li>
+<li><strong>file_format</strong> – Specifies how each line is formatted</li>
+<li><strong>number_of_arguments_per_parameter</strong> – A dict specifying the length of parameters that require more than one argument.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.utility.ItemCollection.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

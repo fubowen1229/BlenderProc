@@ -1,0 +1,318 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.lighting.SuncgLighting &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.lighting.SuncgLighting</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.main.Module</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+
+
+<div class="viewcode-block" id="SuncgLighting"><a class="viewcode-back" href="../../../src.lighting.SuncgLighting.html#src.lighting.SuncgLighting.SuncgLighting">[docs]</a><span class="k">class</span> <span class="nc">SuncgLighting</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Adds emission shader to lamps, windows and ceilings.</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">       :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">       &quot;lightbulb_emission_strength&quot;, &quot;The emission strength that should be used for light bulbs.&quot;</span>
+<span class="sd">                                      &quot;Type: float. Default: 15&quot;</span>
+<span class="sd">       &quot;lampshade_emission_strength&quot;, &quot;The emission strength that should be used for lamp shades.&quot;</span>
+<span class="sd">                                      &quot;Type: float. Default: 7&quot;</span>
+<span class="sd">       &quot;ceiling_emission_strength&quot;, &quot;The emission strength that should be used for the ceiling. &quot;</span>
+<span class="sd">                                    &quot;Type: float. Default: 1.5&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Read in lights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lights</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># File format: &lt;obj id&gt; &lt;number of lightbulb materials&gt; &lt;lightbulb material names&gt; &lt;number of lampshade materials&gt; &lt;lampshade material names&gt;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;resources&#39;</span><span class="p">,</span> <span class="s2">&quot;suncg&quot;</span><span class="p">,</span> <span class="s2">&quot;light_geometry_compact.txt&quot;</span><span class="p">)))</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lights</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[[],</span> <span class="p">[]]</span>
+
+                <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span>
+
+                <span class="c1"># Read in lightbulb materials</span>
+                <span class="n">number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lights</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                    <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="c1"># Read in lampshade materials</span>
+                <span class="n">number</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">lights</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+                    <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Read in windows</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">windows</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;resources&#39;</span><span class="p">,</span><span class="s1">&#39;suncg&#39;</span><span class="p">,</span><span class="s1">&#39;ModelCategoryMapping.csv&#39;</span><span class="p">)),</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;coarse_grained_class&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;window&quot;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">windows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;model_id&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lamp&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;window&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;ceiling&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+
+<div class="viewcode-block" id="SuncgLighting._make_lamp_emissive"><a class="viewcode-back" href="../../../src.lighting.SuncgLighting.html#src.lighting.SuncgLighting.SuncgLighting._make_lamp_emissive">[docs]</a>    <span class="k">def</span> <span class="nf">_make_lamp_emissive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">light</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Adds an emission shader to the object materials which are specified in the light list</span>
+
+<span class="sd">        :param obj: The blender object.</span>
+<span class="sd">        :param light: A list of two lists. The first list specifies all materials which should act as a lightbulb, the second one lists all materials corresponding to lampshades.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">material_slots</span><span class="p">:</span>
+            <span class="n">mat_name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">mat_name</span><span class="p">:</span>
+                <span class="n">mat_name</span> <span class="o">=</span> <span class="n">mat_name</span><span class="p">[:</span><span class="n">mat_name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">mat_name</span> <span class="ow">in</span> <span class="n">light</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="n">mat_name</span> <span class="ow">in</span> <span class="n">light</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">old_mat_name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">if</span> <span class="n">old_mat_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;lamp&quot;</span><span class="p">]:</span>
+                    <span class="c1"># this material was used as a ceiling before use that one</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;lamp&quot;</span><span class="p">][</span><span class="n">old_mat_name</span><span class="p">]</span>
+                    <span class="k">continue</span>
+                <span class="c1"># copy the material if more than one users is using it</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">users</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">new_mat</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="n">new_mat</span>
+                <span class="c1"># rename the material</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot;_emission&quot;</span>
+                <span class="n">nodes</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+                <span class="n">links</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+
+                <span class="n">output</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;OutputMaterial&#39;</span><span class="p">)</span>
+                <span class="n">emission</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_nodes_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;Emission&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">emission</span><span class="p">:</span>
+                    <span class="n">principled</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;BsdfPrincipled&quot;</span><span class="p">)</span>
+                    <span class="n">mix_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeMixShader&#39;</span><span class="p">)</span>
+                    <span class="n">Utility</span><span class="o">.</span><span class="n">insert_node_instead_existing_link</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="n">principled</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;BSDF&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Shader&#39;</span><span class="p">],</span> <span class="n">output</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Surface&#39;</span><span class="p">])</span>
+
+                    <span class="c1"># The light path node returns 1, if the material is hit by a ray coming from the camera, else it returns 0.</span>
+                    <span class="c1"># In this way the mix shader will use the principled shader for rendering the color of the lightbulb itself, while using the emission shader for lighting the scene.</span>
+                    <span class="n">lightPath_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeLightPath&#39;</span><span class="p">)</span>
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">lightPath_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Is Camera Ray&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Fac&#39;</span><span class="p">])</span>
+
+                    <span class="n">emission_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeEmission&#39;</span><span class="p">)</span>
+                    <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Color&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">diffuse_color</span>
+
+                    <span class="k">if</span> <span class="n">mat_name</span> <span class="ow">in</span> <span class="n">light</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                        <span class="c1"># If the material corresponds to light bulb</span>
+                        <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Strength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;lightbulb_emission_strength&quot;</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># If the material corresponds to a lampshade</span>
+                        <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Strength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;lampshade_emission_strength&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">emission_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;Emission&quot;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;lamp&quot;</span><span class="p">][</span><span class="n">old_mat_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span></div>
+
+<div class="viewcode-block" id="SuncgLighting._make_window_emissive"><a class="viewcode-back" href="../../../src.lighting.SuncgLighting.html#src.lighting.SuncgLighting.SuncgLighting._make_window_emissive">[docs]</a>    <span class="k">def</span> <span class="nf">_make_window_emissive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Makes the given window object emissive.</span>
+
+<span class="sd">        For each material with alpha &lt; 1.</span>
+<span class="sd">        Uses a light path node to make it emit light, but at the same time look like a principle material.</span>
+<span class="sd">        Otherwise windows would be completely white.</span>
+
+<span class="sd">        :param obj: A window object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">material_slots</span><span class="p">:</span>
+            <span class="n">nodes</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+            <span class="n">links</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+
+            <span class="c1"># All parameters imported from the .mtl file are stored inside the principled bsdf node</span>
+            <span class="n">principled_node</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;BsdfPrincipled&quot;</span><span class="p">)</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">principled_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Alpha&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span>
+
+            <span class="k">if</span> <span class="n">alpha</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">mat_name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span>
+                <span class="k">if</span> <span class="n">mat_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;window&quot;</span><span class="p">]:</span>
+                    <span class="c1"># this material was used as a ceiling before use that one</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;window&quot;</span><span class="p">][</span><span class="n">mat_name</span><span class="p">]</span>
+                    <span class="k">continue</span>
+                <span class="c1"># copy the material if more than one users is using it</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">users</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">new_mat</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="n">new_mat</span>
+                    <span class="n">nodes</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+                    <span class="n">links</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+                <span class="c1"># rename the material</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot;_emission&quot;</span>
+                <span class="n">emission</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_nodes_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;Emission&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">emission</span><span class="p">:</span>
+                    <span class="n">output</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;OutputMaterial&#39;</span><span class="p">)</span>
+                    <span class="n">link</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">links</span> <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">to_socket</span> <span class="o">==</span> <span class="n">output</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Surface&#39;</span><span class="p">])</span>
+                    <span class="n">links</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">link</span><span class="p">)</span>
+
+                    <span class="c1"># The light path node returns 1, if the material is hit by a ray coming from the camera, else it returns 0.</span>
+                    <span class="c1"># In this way the mix shader will use the diffuse shader for rendering the color of the window itself, while using the emission shader for lighting the scene.</span>
+                    <span class="n">mix_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeMixShader&#39;</span><span class="p">)</span>
+                    <span class="n">emission_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeEmission&#39;</span><span class="p">)</span>
+                    <span class="n">transparent_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeBsdfDiffuse&#39;</span><span class="p">)</span>
+                    <span class="n">transparent_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Color&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.285</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.48</span><span class="p">)</span>
+                    <span class="n">lightPath_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeLightPath&#39;</span><span class="p">)</span>
+
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">mix_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;Shader&quot;</span><span class="p">],</span> <span class="n">output</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Surface&#39;</span><span class="p">])</span>
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">lightPath_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Is Camera Ray&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Fac&#39;</span><span class="p">])</span>
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">emission_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Emission&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">transparent_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;BSDF&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+                    <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Color&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Strength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># strength of the windows</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;window&quot;</span><span class="p">][</span><span class="n">mat_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;window&quot;</span><span class="p">][</span><span class="n">mat_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span></div>
+
+<div class="viewcode-block" id="SuncgLighting._make_ceiling_emissive"><a class="viewcode-back" href="../../../src.lighting.SuncgLighting.html#src.lighting.SuncgLighting.SuncgLighting._make_ceiling_emissive">[docs]</a>    <span class="k">def</span> <span class="nf">_make_ceiling_emissive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Makes the given ceiling object emissive, s.t. there is always a little bit ambient light.</span>
+
+<span class="sd">        :param obj: The ceiling object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">material_slots</span><span class="p">:</span>
+            <span class="n">mat_name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span>
+            <span class="k">if</span> <span class="n">mat_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;ceiling&quot;</span><span class="p">]:</span>
+                <span class="c1"># this material was used as a ceiling before use that one</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;ceiling&quot;</span><span class="p">][</span><span class="n">mat_name</span><span class="p">]</span>
+                <span class="k">continue</span>
+            <span class="c1"># copy the material if more than one users is using it</span>
+            <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">users</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">new_mat</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="n">new_mat</span>
+            <span class="c1"># rename the material</span>
+            <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+                <span class="c1"># remove everything after the dot</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span><span class="p">[:</span><span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)]</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">name</span> <span class="o">+=</span> <span class="s2">&quot;_emission&quot;</span>
+
+            <span class="n">nodes</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+            <span class="n">links</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+
+            <span class="n">output</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;OutputMaterial&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_nodes_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;Emission&quot;</span><span class="p">):</span>
+                <span class="n">principled</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_nodes_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;BsdfPrincipled&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">principled</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">principled</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">principled</span> <span class="o">=</span> <span class="n">principled</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;This material: </span><span class="si">{}</span><span class="s2"> has more than one Diffuse Shader&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                    <span class="n">mix_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeMixShader&#39;</span><span class="p">)</span>
+
+                    <span class="n">Utility</span><span class="o">.</span><span class="n">insert_node_instead_existing_link</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="n">principled</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;BSDF&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Shader&#39;</span><span class="p">],</span> <span class="n">output</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Surface&#39;</span><span class="p">])</span>
+
+                    <span class="c1"># The light path node returns 1, if the material is hit by a ray coming from the camera, else it returns 0.</span>
+                    <span class="c1"># In this way the mix shader will use the principled shader for rendering the color of the ceiling itself, while using the emission shader for lighting the scene.</span>
+                    <span class="n">lightPath_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeLightPath&#39;</span><span class="p">)</span>
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">lightPath_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Is Camera Ray&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Fac&#39;</span><span class="p">])</span>
+
+                    <span class="n">emission_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeEmission&#39;</span><span class="p">)</span>
+                    <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Strength&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;ceiling_emission_strength&quot;</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">)</span>
+                    <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">emission_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Emission&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_collection_of_mats</span><span class="p">[</span><span class="s2">&quot;ceiling&quot;</span><span class="p">][</span><span class="n">mat_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">material</span></div>
+
+<div class="viewcode-block" id="SuncgLighting.run"><a class="viewcode-back" href="../../../src.lighting.SuncgLighting.html#src.lighting.SuncgLighting.SuncgLighting.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Make some objects emit lights</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;modelId&quot;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="n">obj_id</span> <span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;modelId&quot;</span><span class="p">]</span>
+
+                <span class="c1"># In the case of the lamp</span>
+                <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">lights</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_make_lamp_emissive</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">lights</span><span class="p">[</span><span class="n">obj_id</span><span class="p">])</span>
+
+                <span class="c1"># Make the windows emit light</span>
+                <span class="k">if</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">windows</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_make_window_emissive</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+                <span class="c1"># Also make ceilings slightly emit light</span>
+                <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Ceiling#&quot;</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_make_ceiling_emissive</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

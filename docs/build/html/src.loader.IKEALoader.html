@@ -1,0 +1,148 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.IKEALoader module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.loader.IKEALoader">
+<span id="src-loader-ikealoader-module"></span><h1>src.loader.IKEALoader module<a class="headerlink" href="#module-src.loader.IKEALoader" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.loader.IKEALoader.IKEALoader">
+<em class="property">class </em><code class="descclassname">src.loader.IKEALoader.</code><code class="descname">IKEALoader</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/IKEALoader.html#IKEALoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.IKEALoader.IKEALoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.loader.LoaderInterface.html#src.loader.LoaderInterface.LoaderInterface" title="src.loader.LoaderInterface.LoaderInterface"><code class="xref py py-class docutils literal"><span class="pre">src.loader.LoaderInterface.LoaderInterface</span></code></a></p>
+<p>This class loads objects from the IKEA dataset.</p>
+<p>Objects can be selected randomly, based on object type, object style, or both.</p>
+<p>As for all loaders it is possible to add custom properties to the loaded object, for that use add_properties.</p>
+<p><strong>Configuration</strong>:
+.. csv-table:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">:</span><span class="n">header</span><span class="p">:</span> <span class="s2">&quot;Parameter&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span>
+ <span class="s2">&quot;data_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;The directory with all the IKEA models. Type: str. Default: &#39;resources/IKEA&#39;&quot;</span>
+ <span class="s2">&quot;obj_type&quot;</span><span class="p">,</span> <span class="s2">&quot;The category to use for example: &#39;bookcase&#39;. Type: string. Default: None.&quot;</span>
+             <span class="s2">&quot;Available: [&#39;bed&#39;, &#39;bookcase&#39;, &#39;chair&#39;, &#39;desk&#39;, &#39;sofa&#39;, &#39;table&#39;, &#39;wardrobe&#39;]&quot;</span>
+ <span class="s2">&quot;obj_style&quot;</span><span class="p">,</span> <span class="s2">&quot;The IKEA style to use for example: &#39;hemnes&#39;. Type: string. Default: None.&quot;</span>
+              <span class="s2">&quot;See data_dir for other options.&quot;</span>
+</pre></div>
+</div>
+<dl class="staticmethod">
+<dt id="src.loader.IKEALoader.IKEALoader._check_material_file">
+<em class="property">static </em><code class="descname">_check_material_file</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/IKEALoader.html#IKEALoader._check_material_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.IKEALoader.IKEALoader._check_material_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether there is a texture file (.mtl) associated to the object available.
+:param path: (str) path to object
+:return: (boolean) texture file exists</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.IKEALoader.IKEALoader._generate_object_dict">
+<code class="descname">_generate_object_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/IKEALoader.html#IKEALoader._generate_object_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.IKEALoader.IKEALoader._generate_object_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a dictionary of all available objects, i.e. all .obj files that have an associated .mtl file.
+dict: {IKEA_&lt;type&gt;_&lt;style&gt; : [&lt;path_to_obj_file&gt;, …]}</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.IKEALoader.IKEALoader._get_object_by_style">
+<code class="descname">_get_object_by_style</code><span class="sig-paren">(</span><em>obj_style</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/IKEALoader.html#IKEALoader._get_object_by_style"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.IKEALoader.IKEALoader._get_object_by_style" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds all available objects with a specific style, i.e. IKEA product series.
+:param obj_type: (str) type of object e.g. ‘table’
+:return: (list) list of available objects with specified style</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.IKEALoader.IKEALoader._get_object_by_type">
+<code class="descname">_get_object_by_type</code><span class="sig-paren">(</span><em>obj_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/IKEALoader.html#IKEALoader._get_object_by_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.IKEALoader.IKEALoader._get_object_by_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds all available objects with a specific type.
+:param obj_type: (str) type of object e.g. ‘table’
+:return: (list) list of available objects with specified type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.IKEALoader.IKEALoader.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/IKEALoader.html#IKEALoader.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.IKEALoader.IKEALoader.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Chooses objects based on selected type and style.
+If there are multiple options it picks one randomly or if style or type is None it picks one randomly.
+Loads the selected object via file path.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.loader.IKEALoader.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

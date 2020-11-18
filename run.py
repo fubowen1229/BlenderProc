@@ -158,8 +158,9 @@ general_required_packages = ["pyyaml==5.1.2", "Sphinx==1.6.5"]
 required_packages = general_required_packages
 if "pip" in setup_config:
     required_packages += setup_config["pip"]
-'''
+
 # Install required packages
+'''
 if len(required_packages) > 0:
     # Install pip
     if platform == "linux" or platform == "linux2":

@@ -1,0 +1,225 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.writer.WriterInterface module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.writer.WriterInterface">
+<span id="src-writer-writerinterface-module"></span><h1>src.writer.WriterInterface module<a class="headerlink" href="#module-src.writer.WriterInterface" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.writer.WriterInterface.WriterInterface">
+<em class="property">class </em><code class="descclassname">src.writer.WriterInterface.</code><code class="descname">WriterInterface</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.main.Module.html#src.main.Module.Module" title="src.main.Module.Module"><code class="xref py py-class docutils literal"><span class="pre">src.main.Module.Module</span></code></a></p>
+<p>Parent class for all other writers classes, it had the functionality to return objects attributes and write them to file and to load and process post processing modules</p>
+<p><strong>Configuration</strong>:
+.. csv-table:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">:</span><span class="n">header</span><span class="p">:</span> <span class="s2">&quot;Parameter&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span>
+<span class="s2">&quot;postprocessing_modules&quot;</span><span class="p">,</span> <span class="s2">&quot;A dict of list of postprocessing modules. The key in the dict specifies the output &quot;</span>
+                         <span class="s2">&quot;to which the postprocessing modules should be applied. Every postprocessing module &quot;</span>
+                         <span class="s2">&quot;has to have a run function which takes in the raw data and returns the processed &quot;</span>
+                         <span class="s2">&quot;data. Type: dict.&quot;</span>
+<span class="s2">&quot;destination_frame&quot;</span><span class="p">,</span> <span class="s2">&quot;Used to transform point to blender coordinate frame. Type: list. Default: [&quot;</span><span class="n">X</span><span class="s2">&quot;, &quot;</span><span class="n">Y</span><span class="s2">&quot;, &quot;</span><span class="n">Z</span><span class="s2">&quot;]&quot;</span>
+<span class="s2">&quot;attributes_to_write&quot;</span><span class="p">,</span> <span class="s2">&quot;A list of attribute names that should written to file. The next table lists all &quot;</span>
+                       <span class="s2">&quot;attributes that can be used here. Type: list.&quot;</span>
+<span class="s2">&quot;output_file_prefix&quot;</span><span class="p">,</span> <span class="s2">&quot;The prefix of the file that should be created. Type: string.&quot;</span>
+<span class="s2">&quot;output_key&quot;</span><span class="p">,</span> <span class="s2">&quot;The key which should be used for storing the output in a merged file. Type: string.&quot;</span>
+<span class="s2">&quot;transparent_background&quot;</span><span class="p">,</span> <span class="s2">&quot;If true, the alpha channel will be written to file. Type: bool. Default: False.&quot;</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="src.writer.WriterInterface.WriterInterface._apply_postprocessing">
+<code class="descname">_apply_postprocessing</code><span class="sig-paren">(</span><em>output_key</em>, <em>data</em>, <em>version</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface._apply_postprocessing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface._apply_postprocessing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Applies all postprocessing modules registered for this output type.
+:param output_key: The key of the output type. Type: string
+:param data: The numpy data.
+:param version: The version number original data.
+:return: The modified numpy data after doing the postprocessing</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.WriterInterface.WriterInterface._get_attribute">
+<code class="descname">_get_attribute</code><span class="sig-paren">(</span><em>item</em>, <em>attribute_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface._get_attribute"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface._get_attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value of the requested attribute for the given item.</p>
+<p>This method covers all general attributes that blender objects have.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>item</strong> – The item. Type: blender object.</li>
+<li><strong>attribute_name</strong> – The attribute name. Type: string.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The attribute value.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.WriterInterface.WriterInterface._load_and_postprocess">
+<code class="descname">_load_and_postprocess</code><span class="sig-paren">(</span><em>file_path</em>, <em>key</em>, <em>version='1.0.0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface._load_and_postprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface._load_and_postprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads an image and post process it.
+:param file_path: Image path. Type: string.
+:param key: The image’s key with regards to the hdf5 file. Type: string.
+:param version: The version number original data. Type: String. Default: 1.0.0.
+:return: The post-processed image that was loaded using the file path.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.WriterInterface.WriterInterface._load_csv">
+<code class="descname">_load_csv</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface._load_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface._load_csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the csv file at the given path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_path</strong> – The path. Type: string.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The content of the file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.WriterInterface.WriterInterface._load_file">
+<code class="descname">_load_file</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface._load_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface._load_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tries to read in the file with the given path into a numpy array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_path</strong> – The file path. Type: string.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">A numpy array containing the data of the file.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.WriterInterface.WriterInterface._load_npy">
+<code class="descname">_load_npy</code><span class="sig-paren">(</span><em>file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface._load_npy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface._load_npy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the npy/npz file at the given path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>file_path</strong> – The path. Type: string.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The content of the file</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.writer.WriterInterface.WriterInterface.write_attributes_to_file">
+<code class="descname">write_attributes_to_file</code><span class="sig-paren">(</span><em>item_writer</em>, <em>items</em>, <em>default_file_prefix</em>, <em>default_output_key</em>, <em>default_attributes</em>, <em>version='1.0.0'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/writer/WriterInterface.html#WriterInterface.write_attributes_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.writer.WriterInterface.WriterInterface.write_attributes_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the state of the given items to a file with the configured prefix.</p>
+<p>This method also registers the corresponding output.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>item_writer</strong> – The item writer object to use. Type: object.</li>
+<li><strong>items</strong> – The list of items. Type: list.</li>
+<li><strong>default_file_prefix</strong> – The default file name prefix to use. Type: string.</li>
+<li><strong>default_output_key</strong> – The default output key to use. Type: string.</li>
+<li><strong>default_attributes</strong> – The default attributes to write, if no attributes are specified in the config. Type: list.</li>
+<li><strong>version</strong> – The version to use when registering the output. Type: string.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.writer.WriterInterface.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

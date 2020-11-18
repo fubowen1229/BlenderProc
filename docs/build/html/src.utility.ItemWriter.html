@@ -1,0 +1,135 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.utility.ItemWriter module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.utility.ItemWriter">
+<span id="src-utility-itemwriter-module"></span><h1>src.utility.ItemWriter module<a class="headerlink" href="#module-src.utility.ItemWriter" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.utility.ItemWriter.ItemWriter">
+<em class="property">class </em><code class="descclassname">src.utility.ItemWriter.</code><code class="descname">ItemWriter</code><span class="sig-paren">(</span><em>get_item_attribute_func</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemWriter.html#ItemWriter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemWriter.ItemWriter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<dl class="method">
+<dt id="src.utility.ItemWriter.ItemWriter._write_items_to_file_for_current_frame">
+<code class="descname">_write_items_to_file_for_current_frame</code><span class="sig-paren">(</span><em>path_prefix</em>, <em>items</em>, <em>attributes</em>, <em>frame=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemWriter.html#ItemWriter._write_items_to_file_for_current_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemWriter.ItemWriter._write_items_to_file_for_current_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the state of the given items to one numpy file for the given frame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path_prefix</strong> – The prefix path to write the files to.</li>
+<li><strong>items</strong> – A list of items.</li>
+<li><strong>attributes</strong> – A list of attributes to write per item.</li>
+<li><strong>frame</strong> – The frame number.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.utility.ItemWriter.ItemWriter.write_items_to_file">
+<code class="descname">write_items_to_file</code><span class="sig-paren">(</span><em>path_prefix</em>, <em>items</em>, <em>attributes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/ItemWriter.html#ItemWriter.write_items_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.ItemWriter.ItemWriter.write_items_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes the state of the given items to one numpy file per frame.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path_prefix</strong> – The prefix path to write the files to.</li>
+<li><strong>items</strong> – A list of items.</li>
+<li><strong>attributes</strong> – A list of attributes to write per item.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.utility.ItemWriter.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

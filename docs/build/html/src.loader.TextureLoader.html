@@ -1,0 +1,202 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.TextureLoader module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.loader.TextureLoader">
+<span id="src-loader-textureloader-module"></span><h1>src.loader.TextureLoader module<a class="headerlink" href="#module-src.loader.TextureLoader" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.loader.TextureLoader.TextureLoader">
+<em class="property">class </em><code class="descclassname">src.loader.TextureLoader.</code><code class="descname">TextureLoader</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/TextureLoader.html#TextureLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.TextureLoader.TextureLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.loader.LoaderInterface.html#src.loader.LoaderInterface.LoaderInterface" title="src.loader.LoaderInterface.LoaderInterface"><code class="xref py py-class docutils literal"><span class="pre">src.loader.LoaderInterface.LoaderInterface</span></code></a></p>
+<dl class="docutils">
+<dt>Depending on the form of the provided path:</dt>
+<dd><p class="first">1. Loads an image, creates an image texture, and assigns the loaded image to the texture, when a path to an
+image is provided.
+2. Loads images and for each creates a texture, and assing an image to this texture, if a path to a
+folder with images is provided.</p>
+<p>NOTE: Same image file can be loaded once to avoid unnecessary overhead. If you really need the same image in
+different colorspaces, then have a copy per desired colorspace and load them in different instances of this Loader.</p>
+<p>Example 1: Load all images in the folder in sRGB colorspace and create appropriate textures.</p>
+<dl class="docutils">
+<dt>{</dt>
+<dd><p class="first">“module”: “loader.TextureLoader”,
+“config”: {</p>
+<blockquote>
+<div>“path”: “path/to/folder/with/assets/”</div></blockquote>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>}</p>
+<p>Example 2: Load a random image from the path in raw colorspace and create an appropriate texture.</p>
+<dl class="docutils">
+<dt>{</dt>
+<dd><p class="first">“module”: “loader.TextureLoader”,
+“config”: {</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>“path”: {</dt>
+<dd>“provider”: “sampler.Path”,
+“path”: “path/to/folder/with/assets/<a href="#id1"><span class="problematic" id="id2">*</span></a>.png”</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
+<p class="last">},
+“colorspace”: “Raw”</p>
+</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<p><strong>Configuration</strong>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>path</td>
+<td>The path to the folder with assets/to the asset. Type: string.</td>
+</tr>
+<tr class="row-odd"><td>colorspace</td>
+<td><dl class="first last docutils">
+<dt>Colorspace type to assign to loaded assets. Type: string. Available: ‘Filmic Log’, ‘Linear’,</dt>
+<dd>‘Linear ACES’, ‘Non-Color’, ‘Raw’, ‘sRGB’, ‘XYZ’. Default: ‘sRGB’.</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="staticmethod">
+<dt id="src.loader.TextureLoader.TextureLoader._load_and_create">
+<em class="property">static </em><code class="descname">_load_and_create</code><span class="sig-paren">(</span><em>image_paths</em>, <em>colorspace</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/TextureLoader.html#TextureLoader._load_and_create"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.TextureLoader.TextureLoader._load_and_create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads an image, creates an image texture and assigns an image to this texture per each provided path.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>image_paths</strong> – List of absolute paths to assets. Type: list.</li>
+<li><strong>colorspace</strong> – Colorspace type of the assets. Type: string.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Created textures. Type: list.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.loader.TextureLoader.TextureLoader._resolve_paths">
+<em class="property">static </em><code class="descname">_resolve_paths</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/TextureLoader.html#TextureLoader._resolve_paths"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.TextureLoader.TextureLoader._resolve_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolves absolute paths to assets in the provided folder, or to an asset if an appropriate path is provided.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> – Path to folder containing assets or path to an asset. Type: string.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">List of absolute paths to assets. Type: list.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.TextureLoader.TextureLoader.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/TextureLoader.html#TextureLoader.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.TextureLoader.TextureLoader.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads images and creates image textures.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.loader.TextureLoader.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

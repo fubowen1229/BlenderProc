@@ -1,0 +1,427 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.Front3DLoader &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.loader.Front3DLoader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">radians</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+<span class="kn">import</span> <span class="nn">bmesh</span>
+<span class="kn">import</span> <span class="nn">mathutils</span>
+
+<span class="kn">from</span> <span class="nn">src.loader.LoaderInterface</span> <span class="kn">import</span> <span class="n">LoaderInterface</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+<span class="kn">from</span> <span class="nn">src.utility.Config</span> <span class="kn">import</span> <span class="n">Config</span>
+<span class="kn">from</span> <span class="nn">src.utility.BlenderUtility</span> <span class="kn">import</span> <span class="n">duplicate_objects</span>
+<span class="kn">from</span> <span class="nn">src.utility.LabelIdMapping</span> <span class="kn">import</span> <span class="n">LabelIdMapping</span>
+
+<div class="viewcode-block" id="Front3DLoader"><a class="viewcode-back" href="../../../src.loader.Front3DLoader.html#src.loader.Front3DLoader.Front3DLoader">[docs]</a><span class="k">class</span> <span class="nc">Front3DLoader</span><span class="p">(</span><span class="n">LoaderInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads the 3D-Front dataset.</span>
+
+<span class="sd">    https://tianchi.aliyun.com/specials/promotion/alibaba-3d-scene-dataset</span>
+
+<span class="sd">    Each object gets the name based on the category/type, on top of that you can use a mapping specified in the</span>
+<span class="sd">    resources/front_3D folder.</span>
+
+<span class="sd">    The dataset already supports semantic segmentation with either the 3D-Front classes or the nyu classes.</span>
+<span class="sd">    As we have created this mapping ourselves it might be faulty.</span>
+
+<span class="sd">    The Front3DLoader creates automatically lights in the scene, by adding emission shaders to the ceiling and lamps.</span>
+<span class="sd">    The strength can be configured via the config.</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+<span class="sd">        &quot;json_path&quot;, &quot;Path to the json file, where the house information is stored. Type: str.&quot;</span>
+<span class="sd">        &quot;3D_future_model_path&quot;, &quot;Path to the models used in the 3D-Front dataset. Type: str&quot;</span>
+<span class="sd">        &quot;mapping_file&quot;, &quot;Path to a file, which maps the names of the objects to ids.&quot;</span>
+<span class="sd">                        &quot;Type: str. Default: resources/front_3D/3D_front_mapping.csv&quot;</span>
+<span class="sd">        &quot;ceiling_light_strength&quot;, &quot;Strength of the emission shader used in the ceiling. Type: float. Default: 0.8&quot;</span>
+<span class="sd">        &quot;lamp_light_strength&quot;, &quot;Strength of the emission shader used in each lamp. Type: float. Default: 7.0&quot;</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
+        <span class="n">LoaderInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">json_path</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;json_path&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">future_model_path</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;3D_future_model_path&quot;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapping_file</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;mapping_file&quot;</span><span class="p">,</span>
+                                                                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;resources&quot;</span><span class="p">,</span> <span class="s2">&quot;front_3D&quot;</span><span class="p">,</span>
+                                                                                     <span class="s2">&quot;3D_front_mapping.csv&quot;</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping_file</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The mapping file could not be found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping_file</span><span class="p">))</span>
+        <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span> <span class="o">=</span> <span class="n">LabelIdMapping</span><span class="o">.</span><span class="n">read_csv_mapping</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mapping_file</span><span class="p">)</span>
+        <span class="c1"># a list of all newly created objects</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">created_objects</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+
+<div class="viewcode-block" id="Front3DLoader.run"><a class="viewcode-back" href="../../../src.loader.Front3DLoader.html#src.loader.Front3DLoader.Front3DLoader.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The given path does not exists: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.json&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The given path does not point to a .json file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future_model_path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The 3D future model path does not exist: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future_model_path</span><span class="p">))</span>
+
+        <span class="c1"># load data from json file</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">json_file</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">json_file</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_mesh_objects_from_file</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="n">all_loaded_furniture</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_furniture_objs</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_move_and_duplicate_furniture</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">all_loaded_furniture</span><span class="p">)</span>
+
+        <span class="c1"># add an identifier to the obj</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">created_objects</span><span class="p">:</span>
+            <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;is_3d_front&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_properties</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">created_objects</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Front3DLoader._create_mesh_objects_from_file"><a class="viewcode-back" href="../../../src.loader.Front3DLoader.html#src.loader.Front3DLoader.Front3DLoader._create_mesh_objects_from_file">[docs]</a>    <span class="k">def</span> <span class="nf">_create_mesh_objects_from_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This creates for a given data json block all defined meshes and assigns the correct materials.</span>
+<span class="sd">        This means that the json file contains some mesh, like walls and floors, which have to built up manually.</span>
+
+<span class="sd">        It also already adds the lighting for the ceiling</span>
+<span class="sd">        :param data: json data dir. Must contain &quot;material&quot; and &quot;mesh&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># extract all used materials -&gt; there are more materials defined than used</span>
+        <span class="n">used_materials</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mat</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;material&quot;</span><span class="p">]:</span>
+            <span class="n">used_materials</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;uid&quot;</span><span class="p">:</span> <span class="n">mat</span><span class="p">[</span><span class="s2">&quot;uid&quot;</span><span class="p">],</span> <span class="s2">&quot;texture&quot;</span><span class="p">:</span> <span class="n">mat</span><span class="p">[</span><span class="s2">&quot;texture&quot;</span><span class="p">],</span>
+                                   <span class="s2">&quot;normaltexture&quot;</span><span class="p">:</span> <span class="n">mat</span><span class="p">[</span><span class="s2">&quot;normaltexture&quot;</span><span class="p">],</span> <span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="n">mat</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]})</span>
+
+        <span class="n">col</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">collections</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Collection&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">mesh_data</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;mesh&quot;</span><span class="p">]:</span>
+            <span class="c1"># extract the obj name, which also is used as the category_id name</span>
+            <span class="n">used_obj_name</span> <span class="o">=</span> <span class="n">mesh_data</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="c1"># create a new mesh</span>
+            <span class="n">mesh</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">used_obj_name</span> <span class="o">+</span> <span class="s2">&quot;_mesh&quot;</span><span class="p">)</span>  <span class="c1"># add the new mesh</span>
+            <span class="c1"># link this mesh inside of a new object</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">mesh</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">created_objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="c1"># link the object in the collection</span>
+            <span class="n">col</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="c1"># set the name of the new object to the category_id name</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">used_obj_name</span>
+
+            <span class="c1"># set two custom properties, first that it is a 3D_future object and second the category_id</span>
+            <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;is_3D_future&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;category_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="n">used_obj_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+
+            <span class="c1"># get the material uid of the current mesh data</span>
+            <span class="n">current_mat</span> <span class="o">=</span> <span class="n">mesh_data</span><span class="p">[</span><span class="s2">&quot;material&quot;</span><span class="p">]</span>
+            <span class="n">used_mat</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="c1"># search in the used materials after this uid</span>
+            <span class="k">for</span> <span class="n">u_mat</span> <span class="ow">in</span> <span class="n">used_materials</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">u_mat</span><span class="p">[</span><span class="s2">&quot;uid&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">current_mat</span><span class="p">:</span>
+                    <span class="n">used_mat</span> <span class="o">=</span> <span class="n">u_mat</span>
+                    <span class="k">break</span>
+            <span class="c1"># If there should be a material used</span>
+            <span class="k">if</span> <span class="n">used_mat</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">used_mat</span><span class="p">[</span><span class="s2">&quot;texture&quot;</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The material should use a texture, this was not implemented yet!&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">used_mat</span><span class="p">[</span><span class="s2">&quot;normaltexture&quot;</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The material should use a normal texture, this was not implemented yet!&quot;</span><span class="p">)</span>
+                <span class="c1"># if there is a normal color used</span>
+                <span class="k">if</span> <span class="n">used_mat</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">]:</span>
+                    <span class="c1"># Create a new material</span>
+                    <span class="n">mat</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">used_obj_name</span> <span class="o">+</span> <span class="s2">&quot;_material&quot;</span><span class="p">)</span>
+                    <span class="n">mat</span><span class="o">.</span><span class="n">use_nodes</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">nodes</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+                    <span class="c1"># create a principled node and set the default color</span>
+                    <span class="n">principled_node</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;BsdfPrincipled&quot;</span><span class="p">)</span>
+                    <span class="n">principled_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Base Color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Vector</span><span class="p">(</span><span class="n">used_mat</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mf">255.0</span>
+                    <span class="c1"># if the object is a ceiling add some light output</span>
+                    <span class="k">if</span> <span class="s2">&quot;ceiling&quot;</span> <span class="ow">in</span> <span class="n">used_obj_name</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+                        <span class="n">links</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+                        <span class="n">mix_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeMixShader&#39;</span><span class="p">)</span>
+                        <span class="n">output</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;OutputMaterial&#39;</span><span class="p">)</span>
+                        <span class="n">Utility</span><span class="o">.</span><span class="n">insert_node_instead_existing_link</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="n">principled_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;BSDF&#39;</span><span class="p">],</span>
+                                                                  <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Shader&#39;</span><span class="p">],</span>
+                                                                  <span class="n">output</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Surface&#39;</span><span class="p">])</span>
+                        <span class="c1"># The light path node returns 1, if the material is hit by a ray coming from the camera,</span>
+                        <span class="c1"># else it returns 0. In this way the mix shader will use the principled shader for rendering</span>
+                        <span class="c1"># the color of the lightbulb itself, while using the emission shader for lighting the scene.</span>
+                        <span class="n">light_path_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeLightPath&#39;</span><span class="p">)</span>
+                        <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">light_path_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Is Camera Ray&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Fac&#39;</span><span class="p">])</span>
+
+                        <span class="n">emission_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeEmission&#39;</span><span class="p">)</span>
+                        <span class="c1"># use the same color for the emission light then for the ceiling itself</span>
+                        <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Color&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Vector</span><span class="p">(</span><span class="n">used_mat</span><span class="p">[</span><span class="s2">&quot;color&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="mf">255.0</span>
+                        <span class="n">ceiling_light_strength</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;ceiling_light_strength&quot;</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">)</span>
+                        <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Strength&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="n">ceiling_light_strength</span>
+
+                        <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">emission_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;Emission&quot;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+                    <span class="c1"># as this material was just created the material is just appened to the empty list</span>
+                    <span class="n">obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+            <span class="c1"># extract the vertices from the mesh_data</span>
+            <span class="n">vert</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">ele</span><span class="p">)</span> <span class="k">for</span> <span class="n">ele</span> <span class="ow">in</span> <span class="n">mesh_data</span><span class="p">[</span><span class="s2">&quot;xyz&quot;</span><span class="p">]]</span>
+            <span class="c1"># extract the faces from the mesh_data</span>
+            <span class="n">faces</span> <span class="o">=</span> <span class="n">mesh_data</span><span class="p">[</span><span class="s2">&quot;faces&quot;</span><span class="p">]</span>
+            <span class="c1"># extract the normals from the mesh_data</span>
+            <span class="n">normal</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">ele</span><span class="p">)</span> <span class="k">for</span> <span class="n">ele</span> <span class="ow">in</span> <span class="n">mesh_data</span><span class="p">[</span><span class="s2">&quot;normal&quot;</span><span class="p">]]</span>
+
+            <span class="c1"># map those to the blender coordinate system</span>
+            <span class="n">num_vertices</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">vert</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vert</span><span class="p">),</span> <span class="p">[</span><span class="n">num_vertices</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+            <span class="n">normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">normal</span><span class="p">),</span> <span class="p">[</span><span class="n">num_vertices</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+            <span class="c1"># flip the first and second value</span>
+            <span class="n">vertices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">vertices</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">vertices</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">normal</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">normal</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">normal</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">normal</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="c1"># reshape back to a long list</span>
+            <span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="p">[</span><span class="n">num_vertices</span> <span class="o">*</span> <span class="mi">3</span><span class="p">])</span>
+            <span class="n">normal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">normal</span><span class="p">,</span> <span class="p">[</span><span class="n">num_vertices</span> <span class="o">*</span> <span class="mi">3</span><span class="p">])</span>
+
+            <span class="c1"># add this new data to the mesh object</span>
+            <span class="n">mesh</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">vertices</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">num_vertices</span><span class="p">)</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">vertices</span><span class="o">.</span><span class="n">foreach_set</span><span class="p">(</span><span class="s2">&quot;co&quot;</span><span class="p">,</span> <span class="n">vertices</span><span class="p">)</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">vertices</span><span class="o">.</span><span class="n">foreach_set</span><span class="p">(</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">normal</span><span class="p">)</span>
+
+            <span class="c1"># link the faces as vertex indices</span>
+            <span class="n">num_vertex_indicies</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">faces</span><span class="p">)</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">loops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">num_vertex_indicies</span><span class="p">)</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">loops</span><span class="o">.</span><span class="n">foreach_set</span><span class="p">(</span><span class="s2">&quot;vertex_index&quot;</span><span class="p">,</span> <span class="n">faces</span><span class="p">)</span>
+
+            <span class="c1"># the loops are set based on how the faces are a ranged</span>
+            <span class="n">num_loops</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_vertex_indicies</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">polygons</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">num_loops</span><span class="p">)</span>
+            <span class="c1"># always 3 vertices form one triangle</span>
+            <span class="n">loop_start</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_vertex_indicies</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="c1"># the total size of each triangle is therefore 3</span>
+            <span class="n">loop_total</span> <span class="o">=</span> <span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_loops</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">polygons</span><span class="o">.</span><span class="n">foreach_set</span><span class="p">(</span><span class="s2">&quot;loop_start&quot;</span><span class="p">,</span> <span class="n">loop_start</span><span class="p">)</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">polygons</span><span class="o">.</span><span class="n">foreach_set</span><span class="p">(</span><span class="s2">&quot;loop_total&quot;</span><span class="p">,</span> <span class="n">loop_total</span><span class="p">)</span>
+
+            <span class="c1"># the uv coordinates are reshaped then the face coords are extracted</span>
+            <span class="n">uv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">ele</span><span class="p">)</span> <span class="k">for</span> <span class="n">ele</span> <span class="ow">in</span> <span class="n">mesh_data</span><span class="p">[</span><span class="s2">&quot;uv&quot;</span><span class="p">]]),</span> <span class="p">[</span><span class="n">num_vertices</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+            <span class="n">used_uvs</span> <span class="o">=</span> <span class="n">uv</span><span class="p">[</span><span class="n">faces</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="c1"># and again reshaped back to the long list</span>
+            <span class="n">used_uvs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">used_uvs</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span> <span class="o">*</span> <span class="n">num_vertex_indicies</span><span class="p">])</span>
+
+            <span class="n">mesh</span><span class="o">.</span><span class="n">uv_layers</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;new_uv_layer&quot;</span><span class="p">)</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">uv_layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">foreach_set</span><span class="p">(</span><span class="s2">&quot;uv&quot;</span><span class="p">,</span> <span class="n">used_uvs</span><span class="p">)</span>
+
+            <span class="c1"># this update converts the upper data into a mesh</span>
+            <span class="n">mesh</span><span class="o">.</span><span class="n">update</span><span class="p">()</span></div>
+
+            <span class="c1"># the generation might fail if the data does not line up</span>
+            <span class="c1"># this is not used as even if the data does not line up it is still able to render the objects</span>
+            <span class="c1"># We assume that not all meshes in the dataset do conform with the mesh standards set in blender</span>
+            <span class="c1">#result = mesh.validate(verbose=False)</span>
+            <span class="c1">#if result:</span>
+            <span class="c1">#    raise Exception(&quot;The generation of the mesh: {} failed!&quot;.format(used_obj_name))</span>
+
+<div class="viewcode-block" id="Front3DLoader._load_furniture_objs"><a class="viewcode-back" href="../../../src.loader.Front3DLoader.html#src.loader.Front3DLoader.Front3DLoader._load_furniture_objs">[docs]</a>    <span class="k">def</span> <span class="nf">_load_furniture_objs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load all furniture objects specified in the json file, these objects are stored as &quot;raw_model.obj&quot; in the</span>
+<span class="sd">        3D_future_model_path. For lamp the lamp_light_strength value can be changed via the config.</span>
+<span class="sd">        :param data: json data dir. Should contain &quot;furniture&quot;</span>
+<span class="sd">        :return all objects which have been loaded</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># collect all loaded furniture objects</span>
+        <span class="n">all_objs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># for each furniture element</span>
+        <span class="k">for</span> <span class="n">ele</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;furniture&quot;</span><span class="p">]:</span>
+            <span class="c1"># create the paths based on the &quot;jid&quot;</span>
+            <span class="n">folder_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">future_model_path</span><span class="p">,</span> <span class="n">ele</span><span class="p">[</span><span class="s2">&quot;jid&quot;</span><span class="p">])</span>
+            <span class="n">obj_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="s2">&quot;raw_model.obj&quot;</span><span class="p">)</span>
+            <span class="c1"># if the object exists load it -&gt; a lot of object do not exist</span>
+            <span class="c1"># we are unsure why this is -&gt; we assume that not all objects have been made public</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">obj_file</span><span class="p">):</span>
+                <span class="c1"># load all objects from this .obj file</span>
+                <span class="n">objs</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">import_objects</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">obj_file</span><span class="p">)</span>
+                <span class="c1"># extract the name, which serves as category id</span>
+                <span class="n">used_obj_name</span> <span class="o">=</span> <span class="n">ele</span><span class="p">[</span><span class="s2">&quot;category&quot;</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">:</span>
+                    <span class="n">obj</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">used_obj_name</span>
+                    <span class="c1"># add some custom properties</span>
+                    <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;uid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ele</span><span class="p">[</span><span class="s2">&quot;uid&quot;</span><span class="p">]</span>
+                    <span class="c1"># this custom property determines if the object was used before</span>
+                    <span class="c1"># is needed to only clone the second appearance of this object</span>
+                    <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;is_used&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;is_3D_future&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Non-Object&quot;</span>  <span class="c1"># is an non object used for the interesting score</span>
+                    <span class="c1"># set the category id based on the used obj name</span>
+                    <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;category_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapping</span><span class="p">[</span><span class="n">used_obj_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+                    <span class="c1"># walk over all material slots</span>
+                    <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">material_slots</span><span class="p">:</span>
+                        <span class="n">mat</span> <span class="o">=</span> <span class="n">slot</span><span class="o">.</span><span class="n">material</span>
+                        <span class="n">nodes</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+                        <span class="n">links</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+
+                        <span class="n">principled_node</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_nodes_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;BsdfPrincipled&quot;</span><span class="p">)</span>
+                        <span class="n">is_lamp</span> <span class="o">=</span> <span class="s2">&quot;lamp&quot;</span> <span class="ow">in</span> <span class="n">used_obj_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">principled_node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">is_lamp</span><span class="p">:</span>
+                            <span class="c1"># this material has already been transformed</span>
+                            <span class="k">continue</span>
+                        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">principled_node</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">principled_node</span> <span class="o">=</span> <span class="n">principled_node</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The amount of principle nodes can not be more than 1, &quot;</span>
+                                            <span class="s2">&quot;for obj: </span><span class="si">{}</span><span class="s2">!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+
+                        <span class="c1"># For each a texture node</span>
+                        <span class="n">image_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeTexImage&#39;</span><span class="p">)</span>
+                        <span class="c1"># and load the texture.png</span>
+                        <span class="n">base_image_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="s2">&quot;texture.png&quot;</span><span class="p">)</span>
+                        <span class="n">image_node</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">base_image_path</span><span class="p">,</span> <span class="n">check_existing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                        <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">image_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Color&#39;</span><span class="p">],</span> <span class="n">principled_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Base Color&#39;</span><span class="p">])</span>
+                        <span class="c1"># if the object is a lamp, do the same as for the ceiling and add an emission shader</span>
+                        <span class="k">if</span> <span class="n">is_lamp</span><span class="p">:</span>
+                            <span class="n">mix_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeMixShader&#39;</span><span class="p">)</span>
+                            <span class="n">output</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s1">&#39;OutputMaterial&#39;</span><span class="p">)</span>
+                            <span class="n">Utility</span><span class="o">.</span><span class="n">insert_node_instead_existing_link</span><span class="p">(</span><span class="n">links</span><span class="p">,</span> <span class="n">principled_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;BSDF&#39;</span><span class="p">],</span>
+                                                                      <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Shader&#39;</span><span class="p">],</span>
+                                                                      <span class="n">output</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Surface&#39;</span><span class="p">])</span>
+
+                            <span class="c1"># The light path node returns 1, if the material is hit by a ray coming from the camera,</span>
+                            <span class="c1"># else it returns 0. In this way the mix shader will use the principled shader for</span>
+                            <span class="c1"># rendering the color of the lightbulb itself, while using the emission shader</span>
+                            <span class="c1"># for lighting the scene.</span>
+                            <span class="n">lightPath_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeLightPath&#39;</span><span class="p">)</span>
+                            <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">lightPath_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Is Camera Ray&#39;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Fac&#39;</span><span class="p">])</span>
+
+                            <span class="n">emission_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeEmission&#39;</span><span class="p">)</span>
+                            <span class="n">lamp_light_strength</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;lamp_light_strength&quot;</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">)</span>
+                            <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Strength&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="n">lamp_light_strength</span>
+                            <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">image_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Color&#39;</span><span class="p">],</span> <span class="n">emission_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Color&#39;</span><span class="p">])</span>
+
+                            <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">emission_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;Emission&quot;</span><span class="p">],</span> <span class="n">mix_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+                <span class="n">all_objs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">objs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">all_objs</span></div>
+
+<div class="viewcode-block" id="Front3DLoader._move_and_duplicate_furniture"><a class="viewcode-back" href="../../../src.loader.Front3DLoader.html#src.loader.Front3DLoader.Front3DLoader._move_and_duplicate_furniture">[docs]</a>    <span class="k">def</span> <span class="nf">_move_and_duplicate_furniture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dir</span><span class="p">,</span> <span class="n">all_loaded_furniture</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Move and duplicate the furniture depending on the data in the data json dir.</span>
+<span class="sd">        After loading each object gets a location based on the data in the json file. Some objects are used more than</span>
+<span class="sd">        once these are duplicated and then placed.</span>
+<span class="sd">        :param data: json data dir. Should contain &quot;scene&quot;, which should contain &quot;room&quot;</span>
+<span class="sd">        :param all_loaded_furniture: all objects which have been loaded in _load_furniture_objs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># this rotation matrix rotates the given quaternion into the blender coordinate system</span>
+        <span class="n">blender_rot_mat</span> <span class="o">=</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Matrix</span><span class="o">.</span><span class="n">Rotation</span><span class="p">(</span><span class="n">radians</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;X&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;scene&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no scene data in this json file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="p">))</span>
+        <span class="c1"># for each room</span>
+        <span class="k">for</span> <span class="n">room_id</span><span class="p">,</span> <span class="n">room</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;scene&quot;</span><span class="p">][</span><span class="s2">&quot;room&quot;</span><span class="p">]):</span>
+            <span class="c1"># for each object in that room</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">room</span><span class="p">[</span><span class="s2">&quot;children&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="s2">&quot;furniture&quot;</span> <span class="ow">in</span> <span class="n">child</span><span class="p">[</span><span class="s2">&quot;instanceid&quot;</span><span class="p">]:</span>
+                    <span class="c1"># find the object where the uid matches the child ref id</span>
+                    <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">all_loaded_furniture</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;uid&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">child</span><span class="p">[</span><span class="s2">&quot;ref&quot;</span><span class="p">]:</span>
+                            <span class="c1"># if the object was used before, duplicate the object and move that duplicated obj</span>
+                            <span class="k">if</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;is_used&quot;</span><span class="p">]:</span>
+                                <span class="n">new_obj</span> <span class="o">=</span> <span class="n">duplicate_objects</span><span class="p">(</span><span class="n">obj</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="c1"># if it is the first time use the object directly</span>
+                                <span class="n">new_obj</span> <span class="o">=</span> <span class="n">obj</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">created_objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_obj</span><span class="p">)</span>
+                            <span class="n">new_obj</span><span class="p">[</span><span class="s2">&quot;is_used&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">new_obj</span><span class="p">[</span><span class="s2">&quot;room_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">room_id</span>
+                            <span class="n">new_obj</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Object&quot;</span>  <span class="c1"># is an object used for the interesting score</span>
+                            <span class="n">new_obj</span><span class="p">[</span><span class="s2">&quot;coarse_grained_class&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_obj</span><span class="p">[</span><span class="s2">&quot;category_id&quot;</span><span class="p">]</span>
+                            <span class="c1"># this flips the y and z coordinate to bring it to the blender coordinate system</span>
+                            <span class="n">new_obj</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Vector</span><span class="p">(</span><span class="n">child</span><span class="p">[</span><span class="s2">&quot;pos&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">xzy</span>
+                            <span class="n">new_obj</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">child</span><span class="p">[</span><span class="s2">&quot;scale&quot;</span><span class="p">]</span>
+                            <span class="c1"># extract the quaternion and convert it to a rotation matrix</span>
+                            <span class="n">rotation_mat</span> <span class="o">=</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Quaternion</span><span class="p">(</span><span class="n">child</span><span class="p">[</span><span class="s2">&quot;rot&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">to_euler</span><span class="p">()</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">to_4x4</span><span class="p">()</span>
+                            <span class="c1"># transform it into the blender coordinate system and then to an euler</span>
+                            <span class="n">new_obj</span><span class="o">.</span><span class="n">rotation_euler</span> <span class="o">=</span> <span class="p">(</span><span class="n">blender_rot_mat</span> <span class="o">@</span> <span class="n">rotation_mat</span><span class="p">)</span><span class="o">.</span><span class="n">to_euler</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,159 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.postprocessing.NoiseRemoval module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.postprocessing.NoiseRemoval">
+<span id="src-postprocessing-noiseremoval-module"></span><h1>src.postprocessing.NoiseRemoval module<a class="headerlink" href="#module-src.postprocessing.NoiseRemoval" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.postprocessing.NoiseRemoval.NoiseRemoval">
+<em class="property">class </em><code class="descclassname">src.postprocessing.NoiseRemoval.</code><code class="descname">NoiseRemoval</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/postprocessing/NoiseRemoval.html#NoiseRemoval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.postprocessing.NoiseRemoval.NoiseRemoval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.main.Module.html#src.main.Module.Module" title="src.main.Module.Module"><code class="xref py py-class docutils literal"><span class="pre">src.main.Module.Module</span></code></a></p>
+<p>Removes noise pixels.</p>
+<p>Assumes that noise pixel values won’t occur more than 100 times.</p>
+<dl class="method">
+<dt id="src.postprocessing.NoiseRemoval.NoiseRemoval._get_neighbors">
+<code class="descname">_get_neighbors</code><span class="sig-paren">(</span><em>data</em>, <em>i</em>, <em>j</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/postprocessing/NoiseRemoval.html#NoiseRemoval._get_neighbors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.postprocessing.NoiseRemoval.NoiseRemoval._get_neighbors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the valid neighbor pixel indices of the given pixel.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> – The whole image data.</li>
+<li><strong>i</strong> – The row index of the pixel</li>
+<li><strong>j</strong> – The col index of the pixel.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list of neighbor point indices.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.postprocessing.NoiseRemoval.NoiseRemoval._isin">
+<code class="descname">_isin</code><span class="sig-paren">(</span><em>element</em>, <em>test_elements</em>, <em>assume_unique=False</em>, <em>invert=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/postprocessing/NoiseRemoval.html#NoiseRemoval._isin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.postprocessing.NoiseRemoval.NoiseRemoval._isin" title="Permalink to this definition">¶</a></dt>
+<dd><p>As np.isin is only available after v1.13 and blender is using 1.10.1 we have to implement it manually.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.postprocessing.NoiseRemoval.NoiseRemoval._remove_noise">
+<code class="descname">_remove_noise</code><span class="sig-paren">(</span><em>image</em>, <em>noise_indices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/postprocessing/NoiseRemoval.html#NoiseRemoval._remove_noise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.postprocessing.NoiseRemoval.NoiseRemoval._remove_noise" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function that takes an image and a few 2D indices, where these indices correspond to pixel values in
+segmentation maps, where these values are not real labels, but some deviations from the real labels, that were g
+enerated as a result of Blender doing some interpolation, smooting, or other numerical operations.</p>
+<p>image: ndarray of the .exr segmap
+noise_indices: a list of 2D indices that correspond to the noisy pixels. One criteria of finding these pixels
+is to use a histogram and find the pixels with
+frequencies lower than a threshold, e.g. 100.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.postprocessing.NoiseRemoval.NoiseRemoval.run">
+<code class="descname">run</code><span class="sig-paren">(</span><em>image</em>, <em>key</em>, <em>version</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/postprocessing/NoiseRemoval.html#NoiseRemoval.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.postprocessing.NoiseRemoval.NoiseRemoval.run" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>image</strong> – The image data.</li>
+<li><strong>key</strong> – The key to use when writing to the .hdf5.</li>
+<li><strong>version</strong> – Version of the original data.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The cleaned image data, key to use when writing and version numer.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.postprocessing.NoiseRemoval.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

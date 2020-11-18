@@ -1,0 +1,174 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.renderer.RgbRenderer &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.renderer.RgbRenderer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.renderer.RendererInterface</span> <span class="kn">import</span> <span class="n">RendererInterface</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+
+
+<div class="viewcode-block" id="RgbRenderer"><a class="viewcode-back" href="../../../src.renderer.RgbRenderer.html#src.renderer.RgbRenderer.RgbRenderer">[docs]</a><span class="k">class</span> <span class="nc">RgbRenderer</span><span class="p">(</span><span class="n">RendererInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Renders rgb images for each registered keypoint.</span>
+
+<span class="sd">    Images are stored as PNG-files or JPEG-files with 8bit color depth.</span>
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">        &quot;render_texture_less&quot;, &quot;Render all objects with a white slightly glossy texture, does not change emission &quot;</span>
+<span class="sd">                                &quot;materials, Type: bool. Default: False.&quot;</span>
+<span class="sd">        &quot;image_type&quot;, &quot;Image type of saved rendered images, Type: str. Default: &#39;PNG&#39;. Available: [&#39;PNG&#39;,&#39;JPEG&#39;]&quot;</span>
+<span class="sd">        &quot;transparent_background&quot;, &quot;Whether to render the background as transparent or not, Type: bool. Default: False.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">RendererInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_texture_less_mode</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s1">&#39;render_texture_less&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_image_type</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s1">&#39;image_type&#39;</span><span class="p">,</span> <span class="s1">&#39;PNG&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RgbRenderer.change_to_texture_less_render"><a class="viewcode-back" href="../../../src.renderer.RgbRenderer.html#src.renderer.RgbRenderer.RgbRenderer.change_to_texture_less_render">[docs]</a>    <span class="k">def</span> <span class="nf">change_to_texture_less_render</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Changes the materials, which do not contain a emission shader to a white slightly glossy texture</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_mat</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;TextureLess&quot;</span><span class="p">)</span>
+        <span class="n">new_mat</span><span class="o">.</span><span class="n">use_nodes</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">new_mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+
+        <span class="n">principled_bsdf</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;BsdfPrincipled&quot;</span><span class="p">)</span>
+
+        <span class="c1"># setting the color values for the shader</span>
+        <span class="n">principled_bsdf</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Specular&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.65</span>  <span class="c1"># specular</span>
+        <span class="n">principled_bsdf</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Roughness&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">default_value</span> <span class="o">=</span> <span class="mf">0.2</span>  <span class="c1"># roughness</span>
+
+        <span class="k">for</span> <span class="nb">object</span> <span class="ow">in</span> <span class="p">[</span><span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;materials&#39;</span><span class="p">)]:</span>
+            <span class="c1"># replace all materials with the new texture less material</span>
+            <span class="k">for</span> <span class="n">slot</span> <span class="ow">in</span> <span class="nb">object</span><span class="o">.</span><span class="n">material_slots</span><span class="p">:</span>
+                <span class="n">emission_shader</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="c1"># check if the material contains an emission shader:</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">slot</span><span class="o">.</span><span class="n">material</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+                    <span class="c1"># check if one of the shader nodes is a Emission Shader</span>
+                    <span class="k">if</span> <span class="s1">&#39;Emission&#39;</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">bl_idname</span><span class="p">:</span>
+                        <span class="n">emission_shader</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="k">break</span>
+                <span class="c1"># only replace materials, which do not contain any emission shader</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">emission_shader</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_alpha_channel</span><span class="p">:</span>
+                        <span class="n">slot</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_alpha_texture_node</span><span class="p">(</span><span class="n">slot</span><span class="o">.</span><span class="n">material</span><span class="p">,</span> <span class="n">new_mat</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">slot</span><span class="o">.</span><span class="n">material</span> <span class="o">=</span> <span class="n">new_mat</span></div>
+
+<div class="viewcode-block" id="RgbRenderer.run"><a class="viewcode-back" href="../../../src.renderer.RgbRenderer.html#src.renderer.RgbRenderer.RgbRenderer.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># if the rendering is not performed -&gt; it is probably the debug case.</span>
+        <span class="n">do_undo</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avoid_rendering</span>
+        <span class="k">with</span> <span class="n">Utility</span><span class="o">.</span><span class="n">UndoAfterExecution</span><span class="p">(</span><span class="n">perform_undo_op</span><span class="o">=</span><span class="n">do_undo</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_configure_renderer</span><span class="p">(</span><span class="n">use_denoiser</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default_denoiser</span><span class="o">=</span><span class="s2">&quot;Intel&quot;</span><span class="p">)</span>
+
+            <span class="c1"># In case a previous renderer changed these settings</span>
+            <span class="c1">#Store as RGB by default unless the user specifies store_alpha as true in yaml</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">image_settings</span><span class="o">.</span><span class="n">color_mode</span> <span class="o">=</span> <span class="s2">&quot;RGBA&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;transparent_background&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;RGB&quot;</span>
+            <span class="c1">#set the background as transparent if transparent_background is true in yaml</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">film_transparent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;transparent_background&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">image_settings</span><span class="o">.</span><span class="n">file_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_type</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">image_settings</span><span class="o">.</span><span class="n">color_depth</span> <span class="o">=</span> <span class="s2">&quot;8&quot;</span>
+
+            <span class="c1"># only influences jpg quality</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">image_settings</span><span class="o">.</span><span class="n">quality</span> <span class="o">=</span> <span class="mi">95</span>
+
+            <span class="c1"># check if texture less render mode is active</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_texture_less_mode</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">change_to_texture_less_render</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_use_alpha_channel</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_alpha_channel_to_textures</span><span class="p">(</span><span class="n">blurry_edges</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_render</span><span class="p">(</span><span class="s2">&quot;rgb_&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_type</span> <span class="o">==</span> <span class="s1">&#39;PNG&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_output</span><span class="p">(</span><span class="s2">&quot;rgb_&quot;</span><span class="p">,</span> <span class="s2">&quot;colors&quot;</span><span class="p">,</span> <span class="s2">&quot;.png&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0.0&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_type</span> <span class="o">==</span> <span class="s1">&#39;JPEG&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_register_output</span><span class="p">(</span><span class="s2">&quot;rgb_&quot;</span><span class="p">,</span> <span class="s2">&quot;colors&quot;</span><span class="p">,</span> <span class="s2">&quot;.jpg&quot;</span><span class="p">,</span> <span class="s2">&quot;1.0.0&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Unknown Image Type &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_type</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

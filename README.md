@@ -8,6 +8,20 @@ A procedural Blender pipeline for photorealistic training image generation.
 
 Check out our [arXiv paper](https://arxiv.org/abs/1911.01911) (we are updating it from time to time) and our [workshop paper](https://sim2real.github.io/assets/papers/2020/denninger.pdf) on sim2real transfer presented at RSS 2020.
 
+## Update
+
+by **Fu Bowen**
+
+1.Delete package installation in `run.py`.  
+2.Debug `examples/bop_challenge/config_ycbv_random.yaml`.  
+3.Add `bop_toolkit` and set `config`.  
+4.Build `docs`.  
+5.Add `examples/bop_challenge/config_ycbv_2objs.yaml` to render images with only 2 objects. 
+
+### Note
+
+1.Check intersection: `utility.BlenderUtility` Line 98  
+
 ## Overview Video
 
 <a href="http://www.youtube.com/watch?v=tQ59iGVnJWM">

@@ -1,0 +1,125 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.SceneNetLoader module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.loader.SceneNetLoader">
+<span id="src-loader-scenenetloader-module"></span><h1>src.loader.SceneNetLoader module<a class="headerlink" href="#module-src.loader.SceneNetLoader" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.loader.SceneNetLoader.SceneNetLoader">
+<em class="property">class </em><code class="descclassname">src.loader.SceneNetLoader.</code><code class="descname">SceneNetLoader</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/SceneNetLoader.html#SceneNetLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.SceneNetLoader.SceneNetLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.loader.LoaderInterface.html#src.loader.LoaderInterface.LoaderInterface" title="src.loader.LoaderInterface.LoaderInterface"><code class="xref py py-class docutils literal"><span class="pre">src.loader.LoaderInterface.LoaderInterface</span></code></a></p>
+<p>Loads all SceneNet objects at the given “file_path”.</p>
+<p>The textures for each object are sampled based on the name of the object, if the name is not represented in the
+texture folder the unknown folder is used. This folder does not exists, after downloading the texture dataset.
+Make sure to create and put some textures, you want to use for these instances there.</p>
+<p>All objects get “category_id” set based on the data in the “resources/id_mappings/nyu_idset.csv”</p>
+<p>Each object will have the custom property “is_scene_net_obj”.</p>
+<p><strong>Configuration</strong>:</p>
+<dl class="method">
+<dt id="src.loader.SceneNetLoader.SceneNetLoader._random_sample_materials_for_each_obj">
+<code class="descname">_random_sample_materials_for_each_obj</code><span class="sig-paren">(</span><em>loaded_objects</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/SceneNetLoader.html#SceneNetLoader._random_sample_materials_for_each_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.SceneNetLoader.SceneNetLoader._random_sample_materials_for_each_obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Random sample materials for each of the loaded objects</p>
+<p>Based on the name the textures from the texture_folder will be selected</p>
+<p>:param loaded_objects objects loaded from the .obj file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.SceneNetLoader.SceneNetLoader._set_category_ids">
+<code class="descname">_set_category_ids</code><span class="sig-paren">(</span><em>loaded_objects</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/SceneNetLoader.html#SceneNetLoader._set_category_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.SceneNetLoader.SceneNetLoader._set_category_ids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the category ids for the objs based on the .csv file loaded in LabelIdMapping</p>
+<p>Each object will have a custom property with a label, can be used by the SegMapRenderer.</p>
+<p>:param loaded_objects objects loaded from the .obj file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.SceneNetLoader.SceneNetLoader.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/SceneNetLoader.html#SceneNetLoader.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.SceneNetLoader.SceneNetLoader.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the module, loads all the objects and set the properties correctly (including the category_id)</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.loader.SceneNetLoader.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

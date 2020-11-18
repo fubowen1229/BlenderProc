@@ -1,0 +1,188 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.camera.CameraLoader module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.camera.CameraLoader">
+<span id="src-camera-cameraloader-module"></span><h1>src.camera.CameraLoader module<a class="headerlink" href="#module-src.camera.CameraLoader" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.camera.CameraLoader.CameraLoader">
+<em class="property">class </em><code class="descclassname">src.camera.CameraLoader.</code><code class="descname">CameraLoader</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/CameraLoader.html#CameraLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.CameraLoader.CameraLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.camera.CameraInterface.html#src.camera.CameraInterface.CameraInterface" title="src.camera.CameraInterface.CameraInterface"><code class="xref py py-class docutils literal"><span class="pre">src.camera.CameraInterface.CameraInterface</span></code></a></p>
+<dl class="docutils">
+<dt>Loads camera poses from the configuration and sets them as separate keypoints.</dt>
+<dd><p class="first">Camera poses can be specified either directly inside the config or in an extra file.</p>
+<p>Example 1: Loads camera poses from file &lt;args:0&gt;, followed by the pose file format and setting the fov in radians.</p>
+<dl class="docutils">
+<dt>{</dt>
+<dd><p class="first">“module”: “camera.CameraLoader”,
+“config”: {</p>
+<blockquote>
+<div><p>“path”: “&lt;args:0&gt;”,
+“file_format”: “location rotation/value”,
+“default_cam_param”: {</p>
+<blockquote>
+<div>“fov”: 1</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>}</p>
+<dl class="docutils">
+<dt>Example 2: More examples for parameters in “default_cam_param”. Here cam_K is a camera matrix. Check</dt>
+<dd>CameraInterface for more info on “default_cam_param”.</dd>
+<dt>“default_cam_param”: {</dt>
+<dd>“fov_is_half”: true,
+“interocular_distance”: 0.05,
+“stereo_convergence_mode”: “PARALLEL”,
+“convergence_distance”: 0.00001,
+“cam_K”: [650.018, 0, 637.962, 0, 650.018, 355.984, 0, 0 ,1],
+“resolution_x”: 1280,
+“resolution_y”: 720</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<p><strong>Configuration</strong>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>cam_poses</td>
+<td>Optionally, a list of dicts, where each dict specifies one cam pose. See the next table for which</td>
+</tr>
+<tr class="row-odd"><td>properties can be set. Type: list of dicts. Default: [].</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>path</td>
+<td>Optionally, a path to a file which specifies one camera position per line. The lines has to be</td>
+</tr>
+<tr class="row-odd"><td>formatted as specified in ‘file_format’. Type: string. Default: “.</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>file_format</td>
+<td>A string which specifies how each line of the given file is formatted. The string should contain</td>
+</tr>
+<tr class="row-odd"><td>the keywords of the corresponding properties separated by a space. See next table for allowed</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>properties. Type: string. Default: “.</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>default_cam_param</td>
+<td>A dictionary containing camera intrinsic parameters. Type: dict. Default: {}.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="src.camera.CameraLoader.CameraLoader._add_cam_pose">
+<code class="descname">_add_cam_pose</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/CameraLoader.html#CameraLoader._add_cam_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.CameraLoader.CameraLoader._add_cam_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds new cam pose + intrinsics according to the given configuration.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> – A configuration object which contains all parameters relevant for the new cam pose.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.camera.CameraLoader.CameraLoader.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/CameraLoader.html#CameraLoader.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.CameraLoader.CameraLoader.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.camera.CameraLoader.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

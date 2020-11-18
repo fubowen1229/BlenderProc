@@ -1,0 +1,180 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.main.Pipeline &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.main.Pipeline</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.utility.ConfigParser</span> <span class="kn">import</span> <span class="n">ConfigParser</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span><span class="p">,</span> <span class="n">Config</span>
+<span class="kn">from</span> <span class="nn">src.main.GlobalStorage</span> <span class="kn">import</span> <span class="n">GlobalStorage</span>
+
+<div class="viewcode-block" id="Pipeline"><a class="viewcode-back" href="../../../src.main.Pipeline.html#src.main.Pipeline.Pipeline">[docs]</a><span class="k">class</span> <span class="nc">Pipeline</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">working_dir</span><span class="p">,</span> <span class="n">should_perform_clean_up</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">avoid_rendering</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inits the pipeline, by calling the constructors of all modules mentioned in the config.</span>
+
+<span class="sd">        :param config_path path to the config</span>
+<span class="sd">        :param args arguments which were provided to the run.py and are specified in the config file</span>
+<span class="sd">        :param working_dir the current working dir usually the place where the run.py sits</span>
+<span class="sd">        :param should_perform_clean_up if the generated temp file should be deleted at the end</span>
+<span class="sd">        :param avoid_rendering if this is true all renderes are not executed (except the RgbRenderer,</span>
+<span class="sd">                               where only the rendering call to blender is avoided) with this it is possible to debug</span>
+<span class="sd">                               properly</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">Utility</span><span class="o">.</span><span class="n">working_dir</span> <span class="o">=</span> <span class="n">working_dir</span>
+
+        <span class="c1"># Clean up example scene or scene created by last run when debugging pipeline inside blender</span>
+        <span class="k">if</span> <span class="n">should_perform_clean_up</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup</span><span class="p">()</span> 
+
+        <span class="n">config_parser</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="p">(</span><span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">config_parser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="n">config_path</span><span class="p">),</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">avoid_rendering</span><span class="p">:</span>
+            <span class="n">GlobalStorage</span><span class="o">.</span><span class="n">add_to_config_before_init</span><span class="p">(</span><span class="s2">&quot;avoid_rendering&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">config_object</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_do_clean_up_temp_dir</span> <span class="o">=</span> <span class="n">config_object</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;delete_temporary_files_afterwards&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_temp_dir</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_temporary_directory</span><span class="p">(</span><span class="n">config_object</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">modules</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">initialize_modules</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;modules&quot;</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="Pipeline._cleanup"><a class="viewcode-back" href="../../../src.main.Pipeline.html#src.main.Pipeline.Pipeline._cleanup">[docs]</a>    <span class="k">def</span> <span class="nf">_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Cleanup the scene by removing objects, orphan data and custom properties &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_all_objects</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_orphan_data</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_remove_custom_properties</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Pipeline._remove_all_objects"><a class="viewcode-back" href="../../../src.main.Pipeline.html#src.main.Pipeline.Pipeline._remove_all_objects">[docs]</a>    <span class="k">def</span> <span class="nf">_remove_all_objects</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Removes all objects of the current scene &quot;&quot;&quot;</span>
+        <span class="c1"># Select all</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">select_set</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Delete selection</span>
+        <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Pipeline._remove_orphan_data"><a class="viewcode-back" href="../../../src.main.Pipeline.html#src.main.Pipeline.Pipeline._remove_orphan_data">[docs]</a>    <span class="k">def</span> <span class="nf">_remove_orphan_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove all data blocks which are not used anymore. &quot;&quot;&quot;</span>
+        <span class="n">data_structures</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">meshes</span><span class="p">,</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="p">,</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">textures</span><span class="p">,</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">images</span><span class="p">,</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">brushes</span><span class="p">,</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">cameras</span><span class="p">,</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">actions</span><span class="p">,</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">lights</span>
+        <span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">data_structure</span> <span class="ow">in</span> <span class="n">data_structures</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">data_structure</span><span class="p">:</span>
+                <span class="c1"># If no one uses this block =&gt; remove it</span>
+                <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">users</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">data_structure</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">block</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pipeline._remove_custom_properties"><a class="viewcode-back" href="../../../src.main.Pipeline.html#src.main.Pipeline.Pipeline._remove_custom_properties">[docs]</a>    <span class="k">def</span> <span class="nf">_remove_custom_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Remove all custom properties registered at global entities like the scene. &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">del</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+    
+<div class="viewcode-block" id="Pipeline._clean_up_temp_dir"><a class="viewcode-back" href="../../../src.main.Pipeline.html#src.main.Pipeline.Pipeline._clean_up_temp_dir">[docs]</a>    <span class="k">def</span> <span class="nf">_clean_up_temp_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Cleans up temporary directory &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_clean_up_temp_dir</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pipeline.run"><a class="viewcode-back" href="../../../src.main.Pipeline.html#src.main.Pipeline.Pipeline.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Runs each module and measuring their execution time. &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">Utility</span><span class="o">.</span><span class="n">BlockStopWatch</span><span class="p">(</span><span class="s2">&quot;Running blender pipeline&quot;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">Utility</span><span class="o">.</span><span class="n">BlockStopWatch</span><span class="p">(</span><span class="s2">&quot;Running module &quot;</span> <span class="o">+</span> <span class="n">module</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+                    <span class="n">module</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clean_up_temp_dir</span><span class="p">()</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

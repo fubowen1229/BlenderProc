@@ -1,0 +1,193 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.camera.SuncgCameraSampler module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.camera.SuncgCameraSampler">
+<span id="src-camera-suncgcamerasampler-module"></span><h1>src.camera.SuncgCameraSampler module<a class="headerlink" href="#module-src.camera.SuncgCameraSampler" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.camera.SuncgCameraSampler.SuncgCameraSampler">
+<em class="property">class </em><code class="descclassname">src.camera.SuncgCameraSampler.</code><code class="descname">SuncgCameraSampler</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/SuncgCameraSampler.html#SuncgCameraSampler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.SuncgCameraSampler.SuncgCameraSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.camera.CameraSampler.html#src.camera.CameraSampler.CameraSampler" title="src.camera.CameraSampler.CameraSampler"><code class="xref py py-class docutils literal"><span class="pre">src.camera.CameraSampler.CameraSampler</span></code></a></p>
+<p>Samples valid camera poses inside suncg rooms.</p>
+<p>Works as the standard camera sampler, except the following differences:
+- Always sets the x and y coordinate of the camera location to a value uniformly sampled inside a rooms bounding box
+- The configured z coordinate of the configured camera location is used as relative to the floor
+- All sampled camera locations need to lie straight above the room’s floor to be valid</p>
+<p>See parent class CameraSampler for more details.</p>
+<dl class="method">
+<dt id="src.camera.SuncgCameraSampler.SuncgCameraSampler._find_floor">
+<code class="descname">_find_floor</code><span class="sig-paren">(</span><em>room_obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/SuncgCameraSampler.html#SuncgCameraSampler._find_floor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.SuncgCameraSampler.SuncgCameraSampler._find_floor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the floor object of the given room object.</p>
+<p>Goes through all children and returns the first one with type “Floor”.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>room_obj</strong> – The room object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The found floor object or None if none has been found.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.camera.SuncgCameraSampler.SuncgCameraSampler._insert_key_frames">
+<code class="descname">_insert_key_frames</code><span class="sig-paren">(</span><em>cam</em>, <em>cam_ob</em>, <em>frame_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/SuncgCameraSampler.html#SuncgCameraSampler._insert_key_frames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.SuncgCameraSampler.SuncgCameraSampler._insert_key_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert key frames for all relevant camera attributes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cam</strong> – The camera which contains only camera specific attributes.</li>
+<li><strong>cam_ob</strong> – The object linked to the camera which determines general properties like location/orientation</li>
+<li><strong>frame_id</strong> – The frame number where key frames should be inserted.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.camera.SuncgCameraSampler.SuncgCameraSampler._is_pose_valid">
+<code class="descname">_is_pose_valid</code><span class="sig-paren">(</span><em>floor_obj</em>, <em>cam</em>, <em>cam_ob</em>, <em>cam2world_matrix</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/SuncgCameraSampler.html#SuncgCameraSampler._is_pose_valid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.SuncgCameraSampler.SuncgCameraSampler._is_pose_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if the given pose is valid.</p>
+<ul class="simple">
+<li>Checks if the pose is above the floor</li>
+<li>Checks if the distance to objects is in the configured range</li>
+<li>Checks if the scene coverage score is above the configured threshold</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>floor_obj</strong> – The floor object of the room the camera was sampled in.</li>
+<li><strong>cam</strong> – The camera which contains only camera specific attributes.</li>
+<li><strong>cam_ob</strong> – The object linked to the camera which determines general properties like location/orientation</li>
+<li><strong>cam2world_matrix</strong> – The sampled camera extrinsics in form of a camera to world frame transformation matrix.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True, if the pose is valid</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.camera.SuncgCameraSampler.SuncgCameraSampler.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/SuncgCameraSampler.html#SuncgCameraSampler.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.SuncgCameraSampler.SuncgCameraSampler.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="src.camera.SuncgCameraSampler.SuncgCameraSampler.sample_and_validate_cam_pose">
+<code class="descname">sample_and_validate_cam_pose</code><span class="sig-paren">(</span><em>cam</em>, <em>cam_ob</em>, <em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/camera/SuncgCameraSampler.html#SuncgCameraSampler.sample_and_validate_cam_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.camera.SuncgCameraSampler.SuncgCameraSampler.sample_and_validate_cam_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Samples a new camera pose, sets the parameters of the given camera object accordingly and validates it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cam</strong> – The camera which contains only camera specific attributes.</li>
+<li><strong>cam_ob</strong> – The object linked to the camera which determines general properties like location/orientation</li>
+<li><strong>config</strong> – The config object describing how to sample</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">True, if the sampled pose was valid</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.camera.SuncgCameraSampler.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

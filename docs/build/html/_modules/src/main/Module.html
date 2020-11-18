@@ -1,0 +1,209 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.main.Module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.main.Module</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+
+
+<div class="viewcode-block" id="Module"><a class="viewcode-back" href="../../../src.main.Module.html#src.main.Module.Module">[docs]</a><span class="k">class</span> <span class="nc">Module</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    All of these values can be set per Module or of the global config defined in the main.Initializer:</span>
+
+<span class="sd">      &quot;module&quot;: &quot;main.Initializer&quot;,</span>
+<span class="sd">      &quot;config&quot;:{</span>
+<span class="sd">        &quot;global&quot;: {</span>
+<span class="sd">          &quot;output_dir&quot;: &quot;&lt;args:X&gt;&quot;</span>
+<span class="sd">        }</span>
+<span class="sd">      }</span>
+
+<span class="sd">    If they are set globally all modules will inherit them, if there is no module defined key available.</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">       :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">       &quot;output_is_temp&quot;, &quot;If True, all files created in this module will be written into the temp_dir. If False,&quot;</span>
+<span class="sd">                         &quot;the output_dir is used. Type: bool.&quot;</span>
+<span class="sd">       &quot;output_dir&quot;, &quot;The path to a directory where all persistent output files should be stored. If it doesn&#39;t exist,&quot;</span>
+<span class="sd">                     &quot;it is created automatically. Type: string. Default: &quot;&quot;.&quot;</span>
+<span class="sd">       &quot;temp_dir&quot;, &quot;The path to a directory where all temporary output files should be stored. If it doesn&#39;t exist,&quot;</span>
+<span class="sd">                   &quot;it is created automatically. Type: string. Default: &quot;/dev/shm&quot; or &quot;/tmp/&quot; depending on what&quot;</span>
+<span class="sd">                   &quot;is available for Linux and MacOS, and &quot;&lt;env:TEMP&gt;&quot; for Windows.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_default_init</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Module._default_init"><a class="viewcode-back" href="../../../src.main.Module.html#src.main.Module.Module._default_init">[docs]</a>    <span class="k">def</span> <span class="nf">_default_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        These operations are called during all modules inits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;output_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_temp_dir</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_temporary_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Module._determine_output_dir"><a class="viewcode-back" href="../../../src.main.Module.html#src.main.Module.Module._determine_output_dir">[docs]</a>    <span class="k">def</span> <span class="nf">_determine_output_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_is_temp_default</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the directory where to store output file created by this module.</span>
+
+<span class="sd">        :param output_is_temp_default: True, if the files created by this module should be temporary by default.</span>
+<span class="sd">        :return: The output directory to use</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;output_is_temp&quot;</span><span class="p">,</span> <span class="n">output_is_temp_default</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_temp_dir</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span></div>
+
+<div class="viewcode-block" id="Module._add_output_entry"><a class="viewcode-back" href="../../../src.main.Module.html#src.main.Module.Module._add_output_entry">[docs]</a>    <span class="k">def</span> <span class="nf">_add_output_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Registers the given output in the scene&#39;s custom properties</span>
+
+<span class="sd">        :param output: A dict containing key and path of the new output type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;output&quot;</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_already_registered</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]):</span> <span class="c1"># E.g. multiple camera samplers</span>
+                <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="n">output</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">output</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Module._register_output"><a class="viewcode-back" href="../../../src.main.Module.html#src.main.Module.Module._register_output">[docs]</a>    <span class="k">def</span> <span class="nf">_register_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_prefix</span><span class="p">,</span> <span class="n">default_key</span><span class="p">,</span> <span class="n">suffix</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">stereo</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">unique_for_camposes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">output_key_parameter_name</span><span class="o">=</span><span class="s2">&quot;output_key&quot;</span><span class="p">,</span> <span class="n">output_file_prefix_parameter_name</span><span class="o">=</span><span class="s2">&quot;output_file_prefix&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Registers new output type using configured key and file prefix.</span>
+
+<span class="sd">        :param default_prefix: The default prefix of the generated files.</span>
+<span class="sd">        :param default_key: The default key which should be used for storing the output in merged file.</span>
+<span class="sd">        :param suffix: The suffix of the generated files.</span>
+<span class="sd">        :param version: The version number which will be stored at key_version in the final merged file.</span>
+<span class="sd">        :param stereo: Boolean indicating whether the output of this rendering result will be stereo.</span>
+<span class="sd">        :param unique_for_camposes: True if the output to be registered is unique for all the camera poses</span>
+<span class="sd">        :param output_key_parameter_name: The parameter name to use for retrieving the output key from the config.</span>
+<span class="sd">        :param output_file_prefix_parameter_name: The parameter name to use for retrieving the output file prefix from the config.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_output_entry</span><span class="p">({</span>
+            <span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="n">output_key_parameter_name</span><span class="p">,</span> <span class="n">default_key</span><span class="p">),</span>
+            <span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_determine_output_dir</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="n">output_file_prefix_parameter_name</span><span class="p">,</span> <span class="n">default_prefix</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">%04d</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">unique_for_camposes</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">suffix</span><span class="p">,</span>
+            <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span>
+            <span class="s2">&quot;stereo&quot;</span><span class="p">:</span> <span class="n">stereo</span>
+        <span class="p">})</span></div>
+
+<div class="viewcode-block" id="Module._find_registered_output_by_key"><a class="viewcode-back" href="../../../src.main.Module.html#src.main.Module.Module._find_registered_output_by_key">[docs]</a>    <span class="k">def</span> <span class="nf">_find_registered_output_by_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the output which was registered with the given key.</span>
+
+<span class="sd">        :param key: The output key to look for.</span>
+<span class="sd">        :return: The dict containing all information registered for that output. If no output with the given key exists, None is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;output&quot;</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">output</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Module._output_already_registered"><a class="viewcode-back" href="../../../src.main.Module.html#src.main.Module.Module._output_already_registered">[docs]</a>    <span class="k">def</span> <span class="nf">_output_already_registered</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">output_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Checks if the given output entry already exists in the list of outputs, by checking on the key and path.</span>
+<span class="sd">        Also throws an error if it detects an entry having the same key but not the same path and vice versa since this</span>
+<span class="sd">        is ambiguous.</span>
+
+<span class="sd">        :param output: The output dict entry.</span>
+<span class="sd">        :param output_list: The list of output entries.</span>
+<span class="sd">        :return: bool indicating whether it already exists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">_output</span> <span class="ow">in</span> <span class="n">output_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">_output</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">_output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning! Detected output entries with duplicate keys and paths&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">_output</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">_output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Can not have two output entries with the same key/path but not same path/key.&quot;</span> <span class="o">+</span>
+                                <span class="s2">&quot;Original entry&#39;s data: key:</span><span class="si">{}</span><span class="s2"> path:</span><span class="si">{}</span><span class="s2">, Entry to be registered: key:</span><span class="si">{}</span><span class="s2"> path:</span><span class="si">{}</span><span class="s2">&quot;</span>
+                                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_output</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">],</span> <span class="n">_output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">],</span> <span class="n">output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="kc">False</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

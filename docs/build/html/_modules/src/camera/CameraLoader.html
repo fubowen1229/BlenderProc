@@ -1,0 +1,171 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.camera.CameraLoader &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.camera.CameraLoader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.camera.CameraInterface</span> <span class="kn">import</span> <span class="n">CameraInterface</span>
+<span class="kn">from</span> <span class="nn">src.utility.ItemCollection</span> <span class="kn">import</span> <span class="n">ItemCollection</span>
+
+
+<div class="viewcode-block" id="CameraLoader"><a class="viewcode-back" href="../../../src.camera.CameraLoader.html#src.camera.CameraLoader.CameraLoader">[docs]</a><span class="k">class</span> <span class="nc">CameraLoader</span><span class="p">(</span><span class="n">CameraInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Loads camera poses from the configuration and sets them as separate keypoints.</span>
+<span class="sd">        Camera poses can be specified either directly inside the config or in an extra file.</span>
+
+<span class="sd">        Example 1: Loads camera poses from file &lt;args:0&gt;, followed by the pose file format and setting the fov in radians.</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;module&quot;: &quot;camera.CameraLoader&quot;,</span>
+<span class="sd">          &quot;config&quot;: {</span>
+<span class="sd">            &quot;path&quot;: &quot;&lt;args:0&gt;&quot;,</span>
+<span class="sd">            &quot;file_format&quot;: &quot;location rotation/value&quot;,</span>
+<span class="sd">            &quot;default_cam_param&quot;: {</span>
+<span class="sd">              &quot;fov&quot;: 1</span>
+<span class="sd">            }</span>
+<span class="sd">          }</span>
+<span class="sd">        }</span>
+
+<span class="sd">        Example 2: More examples for parameters in &quot;default_cam_param&quot;. Here cam_K is a camera matrix. Check</span>
+<span class="sd">                   CameraInterface for more info on &quot;default_cam_param&quot;.</span>
+
+<span class="sd">        &quot;default_cam_param&quot;: {</span>
+<span class="sd">          &quot;fov_is_half&quot;: true,</span>
+<span class="sd">          &quot;interocular_distance&quot;: 0.05,</span>
+<span class="sd">          &quot;stereo_convergence_mode&quot;: &quot;PARALLEL&quot;,</span>
+<span class="sd">          &quot;convergence_distance&quot;: 0.00001,</span>
+<span class="sd">          &quot;cam_K&quot;: [650.018, 0, 637.962, 0, 650.018, 355.984, 0, 0 ,1],</span>
+<span class="sd">          &quot;resolution_x&quot;: 1280,</span>
+<span class="sd">          &quot;resolution_y&quot;: 720</span>
+<span class="sd">        }</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">       :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">       &quot;cam_poses&quot;, &quot;Optionally, a list of dicts, where each dict specifies one cam pose. See the next table for which &quot;</span>
+<span class="sd">                    &quot;properties can be set. Type: list of dicts. Default: [].&quot;</span>
+<span class="sd">       &quot;path&quot;, &quot;Optionally, a path to a file which specifies one camera position per line. The lines has to be &quot;</span>
+<span class="sd">               &quot;formatted as specified in &#39;file_format&#39;. Type: string. Default: &quot;&quot;.&quot;</span>
+<span class="sd">       &quot;file_format&quot;, &quot;A string which specifies how each line of the given file is formatted. The string should contain &quot;</span>
+<span class="sd">                      &quot;the keywords of the corresponding properties separated by a space. See next table for allowed &quot;</span>
+<span class="sd">                      &quot;properties. Type: string. Default: &quot;&quot;.&quot;</span>
+<span class="sd">       &quot;default_cam_param&quot;, &quot;A dictionary containing camera intrinsic parameters. Type: dict. Default: {}.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">CameraInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="c1"># A dict specifying the length of parameters that require more than one argument. If not specified, 1 is assumed.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_arguments_per_parameter</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="s2">&quot;rotation/value&quot;</span><span class="p">:</span> <span class="mi">3</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cam_pose_collection</span> <span class="o">=</span> <span class="n">ItemCollection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_add_cam_pose</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_raw_dict</span><span class="p">(</span><span class="s2">&quot;default_cam_param&quot;</span><span class="p">,</span> <span class="p">{}))</span>
+
+<div class="viewcode-block" id="CameraLoader.run"><a class="viewcode-back" href="../../../src.camera.CameraLoader.html#src.camera.CameraLoader.CameraLoader.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cam_pose_collection</span><span class="o">.</span><span class="n">add_items_from_dicts</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="s2">&quot;cam_poses&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cam_pose_collection</span><span class="o">.</span><span class="n">add_items_from_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                                                     <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;file_format&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+                                                     <span class="bp">self</span><span class="o">.</span><span class="n">number_of_arguments_per_parameter</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CameraLoader._add_cam_pose"><a class="viewcode-back" href="../../../src.camera.CameraLoader.html#src.camera.CameraLoader.CameraLoader._add_cam_pose">[docs]</a>    <span class="k">def</span> <span class="nf">_add_cam_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Adds new cam pose + intrinsics according to the given configuration.</span>
+
+<span class="sd">        :param config: A configuration object which contains all parameters relevant for the new cam pose.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Collect camera object</span>
+        <span class="n">cam_ob</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">camera</span>
+        <span class="n">cam</span> <span class="o">=</span> <span class="n">cam_ob</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="c1"># Set intrinsics and extrinsics from config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_cam_intrinsics</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_cam_extrinsics</span><span class="p">(</span><span class="n">cam_ob</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Store new cam pose as next frame</span>
+        <span class="n">frame_id</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_insert_key_frames</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">frame_id</span><span class="p">)</span>
+        <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span> <span class="o">=</span> <span class="n">frame_id</span> <span class="o">+</span> <span class="mi">1</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

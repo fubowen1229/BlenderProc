@@ -1,0 +1,24 @@
+src package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+
+    src.camera
+    src.lighting
+    src.loader
+    src.main
+    src.postprocessing
+    src.renderer
+    src.utility
+    src.writer
+
+Module contents
+---------------
+
+.. automodule:: src
+    :members:
+    :undoc-members:
+    :show-inheritance:

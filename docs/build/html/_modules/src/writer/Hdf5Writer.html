@@ -1,0 +1,202 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.writer.Hdf5Writer &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.writer.Hdf5Writer</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">src.writer.WriterInterface</span> <span class="kn">import</span> <span class="n">WriterInterface</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+
+
+<div class="viewcode-block" id="Hdf5Writer"><a class="viewcode-back" href="../../../src.writer.Hdf5Writer.html#src.writer.Hdf5Writer.Hdf5Writer">[docs]</a><span class="k">class</span> <span class="nc">Hdf5Writer</span><span class="p">(</span><span class="n">WriterInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; For each key frame merges all registered output files into one hdf5 file</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">        &quot;append_to_existing_output&quot;, &quot;If true, the names of the output hdf5 files will be chosen in a way such that &quot;</span>
+<span class="sd">                                    &quot;there are no collisions with already existing hdf5 files in the output directory. &quot;</span>
+<span class="sd">                                    &quot;Type: bool. Default: False&quot;</span>
+<span class="sd">        &quot;compression&quot;, &quot;The compression technique that should be used when storing data in a hdf5 file. Type: string.&quot;</span>
+<span class="sd">        &quot;delete_temporary_files_afterwards&quot;, &quot;True, if all temporary files should be deleted after merging. &quot;</span>
+<span class="sd">                                             &quot;Type: bool. Default value: True.&quot;</span>
+<span class="sd">       &quot;stereo_separate_keys&quot;, &quot;If true, stereo images are saved as two separate images *_0 and *_1. Type: bool. &quot;</span>
+<span class="sd">                                &quot;Default: False (stereo images are combined into one np.array (2, ...)).&quot;</span>
+<span class="sd">        &quot;avoid_rendering&quot;, &quot;If true, exit. Type: bool. Default: False.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">WriterInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_avoid_rendering</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;avoid_rendering&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Hdf5Writer.run"><a class="viewcode-back" href="../../../src.writer.Hdf5Writer.html#src.writer.Hdf5Writer.Hdf5Writer.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avoid_rendering</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Avoid rendering is on, no output produced!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;append_to_existing_output&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">frame_offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="c1"># Look for hdf5 file with highest index</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_determine_output_dir</span><span class="p">(</span><span class="kc">False</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.hdf5&quot;</span><span class="p">):</span>
+                    <span class="n">index</span> <span class="o">=</span> <span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="s2">&quot;.hdf5&quot;</span><span class="p">)]</span>
+                    <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                        <span class="n">frame_offset</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">frame_offset</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">frame_offset</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Go through all frames</span>
+        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_start</span><span class="p">,</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span><span class="p">):</span>
+
+            <span class="c1"># Create output hdf5 file</span>
+            <span class="n">hdf5_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_determine_output_dir</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">frame</span> <span class="o">+</span> <span class="n">frame_offset</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.hdf5&quot;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">hdf5_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+
+                <span class="k">if</span> <span class="s1">&#39;output&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No output was designed in prior models!&quot;</span><span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="c1"># Go through all the output types</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Merging data for frame &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; into &quot;</span> <span class="o">+</span> <span class="n">hdf5_path</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">output_type</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">]:</span>
+                    <span class="n">use_stereo</span> <span class="o">=</span> <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;stereo&quot;</span><span class="p">]</span>
+                    <span class="c1"># Build path (path attribute is format string)</span>
+                    <span class="n">file_path</span> <span class="o">=</span> <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="s1">&#39;%&#39;</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">:</span>
+                        <span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span> <span class="o">%</span> <span class="n">frame</span>
+
+                    <span class="k">if</span> <span class="n">use_stereo</span><span class="p">:</span>
+                        <span class="n">path_l</span><span class="p">,</span> <span class="n">path_r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_stereo_path_pair</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+                        <span class="n">img_l</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_postprocess</span><span class="p">(</span><span class="n">path_l</span><span class="p">,</span> <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">],</span>
+                                                                                   <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">])</span>
+                        <span class="n">img_r</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_postprocess</span><span class="p">(</span><span class="n">path_r</span><span class="p">,</span> <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">],</span>
+                                                                                   <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">])</span>
+
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;stereo_separate_keys&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_write_to_hdf_file</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">new_key</span> <span class="o">+</span> <span class="s2">&quot;_0&quot;</span><span class="p">,</span> <span class="n">img_l</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_write_to_hdf_file</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">new_key</span> <span class="o">+</span> <span class="s2">&quot;_1&quot;</span><span class="p">,</span> <span class="n">img_r</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">img_l</span><span class="p">,</span> <span class="n">img_r</span><span class="p">])</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_write_to_hdf_file</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">data</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">new_version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_postprocess</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">],</span>
+                                                                                <span class="n">output_type</span><span class="p">[</span><span class="s2">&quot;version&quot;</span><span class="p">])</span>
+
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_write_to_hdf_file</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_write_to_hdf_file</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">new_key</span> <span class="o">+</span> <span class="s2">&quot;_version&quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">string_</span><span class="p">([</span><span class="n">new_version</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="Hdf5Writer._write_to_hdf_file"><a class="viewcode-back" href="../../../src.writer.Hdf5Writer.html#src.writer.Hdf5Writer.Hdf5Writer._write_to_hdf_file">[docs]</a>    <span class="k">def</span> <span class="nf">_write_to_hdf_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Adds the given data as a new entry to the given hdf5 file.</span>
+
+<span class="sd">        :param file: The hdf5 file handle.</span>
+<span class="sd">        :param key: The key at which the data should be stored in the hdf5 file. Type: string.</span>
+<span class="sd">        :param data: The data to store.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">char</span> <span class="o">==</span> <span class="s1">&#39;S&#39;</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;compression&quot;</span><span class="p">,</span> <span class="s1">&#39;gzip&#39;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Hdf5Writer._get_stereo_path_pair"><a class="viewcode-back" href="../../../src.writer.Hdf5Writer.html#src.writer.Hdf5Writer.Hdf5Writer._get_stereo_path_pair">[docs]</a>    <span class="k">def</span> <span class="nf">_get_stereo_path_pair</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns stereoscopic file path pair for a given &quot;normal&quot; image file path.</span>
+<span class="sd">        :param file_path: The file path of a single image. Type: string.</span>
+<span class="sd">        :return: The pair of file paths corresponding to the stereo images,</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path_split</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">path_l</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_L.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_split</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">path_split</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">path_r</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_R.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_split</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">path_split</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">path_l</span><span class="p">,</span> <span class="n">path_r</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,200 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.TextureLoader &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.loader.TextureLoader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.loader.LoaderInterface</span> <span class="kn">import</span> <span class="n">LoaderInterface</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+
+
+<div class="viewcode-block" id="TextureLoader"><a class="viewcode-back" href="../../../src.loader.TextureLoader.html#src.loader.TextureLoader.TextureLoader">[docs]</a><span class="k">class</span> <span class="nc">TextureLoader</span><span class="p">(</span><span class="n">LoaderInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Depending on the form of the provided path:</span>
+<span class="sd">        1. Loads an image, creates an image texture, and assigns the loaded image to the texture, when a path to an</span>
+<span class="sd">        image is provided.</span>
+<span class="sd">        2. Loads images and for each creates a texture, and assing an image to this texture, if a path to a</span>
+<span class="sd">        folder with images is provided.</span>
+
+<span class="sd">        NOTE: Same image file can be loaded once to avoid unnecessary overhead. If you really need the same image in</span>
+<span class="sd">        different colorspaces, then have a copy per desired colorspace and load them in different instances of this Loader.</span>
+
+<span class="sd">        Example 1: Load all images in the folder in sRGB colorspace and create appropriate textures.</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;module&quot;: &quot;loader.TextureLoader&quot;,</span>
+<span class="sd">          &quot;config&quot;: {</span>
+<span class="sd">            &quot;path&quot;: &quot;path/to/folder/with/assets/&quot;</span>
+<span class="sd">          }</span>
+<span class="sd">        }</span>
+
+<span class="sd">        Example 2: Load a random image from the path in raw colorspace and create an appropriate texture.</span>
+
+<span class="sd">        {</span>
+<span class="sd">          &quot;module&quot;: &quot;loader.TextureLoader&quot;,</span>
+<span class="sd">          &quot;config&quot;: {</span>
+<span class="sd">            &quot;path&quot;: {</span>
+<span class="sd">              &quot;provider&quot;: &quot;sampler.Path&quot;,</span>
+<span class="sd">              &quot;path&quot;: &quot;path/to/folder/with/assets/*.png&quot;</span>
+<span class="sd">            }</span>
+<span class="sd">          },</span>
+<span class="sd">          &quot;colorspace&quot;: &quot;Raw&quot;</span>
+<span class="sd">        }</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">       :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">       &quot;path&quot;, &quot;The path to the folder with assets/to the asset. Type: string.&quot;</span>
+<span class="sd">       &quot;colorspace&quot;, &quot;Colorspace type to assign to loaded assets. Type: string. Available: &#39;Filmic Log&#39;, &#39;Linear&#39;,</span>
+<span class="sd">                     &#39;Linear ACES&#39;, &#39;Non-Color&#39;, &#39;Raw&#39;, &#39;sRGB&#39;, &#39;XYZ&#39;. Default: &#39;sRGB&#39;.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">LoaderInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TextureLoader.run"><a class="viewcode-back" href="../../../src.loader.TextureLoader.html#src.loader.TextureLoader.TextureLoader.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Loads images and creates image textures. &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">))</span>
+        <span class="n">colorspace</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;colorspace&quot;</span><span class="p">,</span> <span class="s2">&quot;sRGB&quot;</span><span class="p">)</span>
+        <span class="n">image_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_paths</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">textures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_create</span><span class="p">(</span><span class="n">image_paths</span><span class="p">,</span> <span class="n">colorspace</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_properties</span><span class="p">(</span><span class="n">textures</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TextureLoader._resolve_paths"><a class="viewcode-back" href="../../../src.loader.TextureLoader.html#src.loader.TextureLoader.TextureLoader._resolve_paths">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_resolve_paths</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Resolves absolute paths to assets in the provided folder, or to an asset if an appropriate path is provided.</span>
+
+<span class="sd">        :param path: Path to folder containing assets or path to an asset. Type: string.</span>
+<span class="sd">        :return: List of absolute paths to assets. Type: list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">image_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="n">image_paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">image_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid path: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">image_paths</span></div>
+
+<div class="viewcode-block" id="TextureLoader._load_and_create"><a class="viewcode-back" href="../../../src.loader.TextureLoader.html#src.loader.TextureLoader.TextureLoader._load_and_create">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_load_and_create</span><span class="p">(</span><span class="n">image_paths</span><span class="p">,</span> <span class="n">colorspace</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Loads an image, creates an image texture and assigns an image to this texture per each provided path.</span>
+
+<span class="sd">        :param image_paths: List of absolute paths to assets. Type: list.</span>
+<span class="sd">        :param colorspace: Colorspace type of the assets. Type: string.</span>
+<span class="sd">        :return: Created textures. Type: list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="p">[</span><span class="n">image</span><span class="o">.</span><span class="n">filepath</span> <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">images</span><span class="p">]</span>
+        <span class="n">textures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">image_path</span> <span class="ow">in</span> <span class="n">image_paths</span><span class="p">:</span>
+            <span class="n">dir_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+            <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">image_path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">existing</span><span class="p">:</span>
+                <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">image_path</span><span class="p">,</span> <span class="n">directory</span><span class="o">=</span><span class="n">dir_path</span><span class="p">)</span>
+                <span class="n">existing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">image_path</span><span class="p">)</span>
+                <span class="c1"># take the last loaded image (the very last is Render Result, so we take -2)</span>
+                <span class="n">loaded_image</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">images</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">loaded_image</span><span class="o">.</span><span class="n">colorspace_settings</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">colorspace</span>
+                <span class="n">texture_name</span> <span class="o">=</span> <span class="s2">&quot;ct_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">loaded_image</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">tex</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">textures</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">texture_name</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;IMAGE&quot;</span><span class="p">)</span>
+                <span class="n">tex</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+                <span class="n">tex</span><span class="o">.</span><span class="n">use_nodes</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">textures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tex</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Image </span><span class="si">{}</span><span class="s2"> has been already loaded and a corresponding texture was created. Following the &quot;</span>
+                              <span class="s2">&quot;save behaviour of reducing the overhead, it is skipped. So, if you really need to load the &quot;</span>
+                              <span class="s2">&quot;same image again (for example, in a different or in the same colorspace), use the copy &quot;</span>
+                              <span class="s2">&quot;of the file.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">image_path</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">textures</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

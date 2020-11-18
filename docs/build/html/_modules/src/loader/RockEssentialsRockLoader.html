@@ -1,0 +1,305 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.RockEssentialsRockLoader &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.loader.RockEssentialsRockLoader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">choice</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.loader.LoaderInterface</span> <span class="kn">import</span> <span class="n">LoaderInterface</span>
+<span class="kn">from</span> <span class="nn">src.utility.Config</span> <span class="kn">import</span> <span class="n">Config</span>
+
+
+<div class="viewcode-block" id="RockEssentialsRockLoader"><a class="viewcode-back" href="../../../src.loader.RockEssentialsRockLoader.html#src.loader.RockEssentialsRockLoader.RockEssentialsRockLoader">[docs]</a><span class="k">class</span> <span class="nc">RockEssentialsRockLoader</span><span class="p">(</span><span class="n">LoaderInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Loads rocks/cliffs from a specified .bled Rocks Essentials file.</span>
+
+<span class="sd">    Example 1: Load two rocks from the specified .blend file.</span>
+
+<span class="sd">    {</span>
+<span class="sd">      &quot;module&quot;: &quot;loader.RockEssentialsRockLoader&quot;,</span>
+<span class="sd">      &quot;config&quot;: {</span>
+<span class="sd">        &quot;batches&quot;: [</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;path&quot;: &quot;&lt;args:0&gt;/Rock Essentials/Individual Rocks/Sea/Rocks_Sea_Large.blend&quot;,</span>
+<span class="sd">          &quot;objects&quot;: [&#39;Rock_Sea_Large001&#39;,&#39;Rock_Sea_Large003&#39;]</span>
+<span class="sd">        }</span>
+<span class="sd">        ]</span>
+<span class="sd">      }</span>
+<span class="sd">    }</span>
+
+<span class="sd">    Example 2: Load 5 copies of two specified rocks from the specified .blend file.</span>
+
+<span class="sd">    {</span>
+<span class="sd">      &quot;module&quot;: &quot;loader.RockEssentialsRockLoader&quot;,</span>
+<span class="sd">      &quot;config&quot;: {</span>
+<span class="sd">        &quot;batches&quot;: [</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;path&quot;: &quot;&lt;args:0&gt;/Rock Essentials/Individual Rocks/Sea/Rocks_Sea_Large.blend&quot;,</span>
+<span class="sd">          &quot;objects&quot;: [&#39;Rock_Sea_Large001&#39;,&#39;Rock_Sea_Large003&#39;],</span>
+<span class="sd">          &quot;amount&quot;: 5</span>
+<span class="sd">        }</span>
+<span class="sd">        ]</span>
+<span class="sd">      }</span>
+<span class="sd">    }</span>
+
+<span class="sd">    Example 3: Load 5 rocks, where each loaded rock is randomly selected out of a list of two rocks, from the specified</span>
+<span class="sd">               .blend file.</span>
+
+<span class="sd">    {</span>
+<span class="sd">      &quot;module&quot;: &quot;loader.RockEssentialsRockLoader&quot;,</span>
+<span class="sd">      &quot;config&quot;: {</span>
+<span class="sd">        &quot;batches&quot;: [</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;path&quot;: &quot;&lt;args:0&gt;/Rock Essentials/Individual Rocks/Sea/Rocks_Sea_Large.blend&quot;,</span>
+<span class="sd">          &quot;objects&quot;: [&#39;Rock_Sea_Large001&#39;,&#39;Rock_Sea_Large003&#39;],</span>
+<span class="sd">          &quot;amount&quot;: 5,</span>
+<span class="sd">          &quot;sample_objects&quot;: True</span>
+<span class="sd">        }</span>
+<span class="sd">        ]</span>
+<span class="sd">      }</span>
+<span class="sd">    }</span>
+
+<span class="sd">    Example 4: Load 5 random rocks from the specified .blend file.</span>
+
+<span class="sd">    {</span>
+<span class="sd">      &quot;module&quot;: &quot;loader.RockEssentialsRockLoader&quot;,</span>
+<span class="sd">      &quot;config&quot;: {</span>
+<span class="sd">        &quot;batches&quot;: [</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;path&quot;: &quot;&lt;args:0&gt;/Rock Essentials/Individual Rocks/Sea/Rocks_Sea_Large.blend&quot;,</span>
+<span class="sd">          &quot;amount&quot;: 5,</span>
+<span class="sd">          &quot;sample_objects&quot;: True</span>
+<span class="sd">        }</span>
+<span class="sd">        ]</span>
+<span class="sd">      }</span>
+<span class="sd">    }</span>
+
+<span class="sd">    **configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Keyword&quot;, &quot;Description&quot;</span>
+
+<span class="sd">        &quot;batches&quot;, &quot;Rocks to load. Each cell contains separate configuration data. Type: list. Default: [].&quot;</span>
+
+<span class="sd">    **Properties per rock batch**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Keyword&quot;, &quot;Description&quot;</span>
+
+<span class="sd">        &quot;path&quot;, &quot;Path to a .blend file containing desired rock/cliff objects in //Object// section. Type: string.&quot;</span>
+<span class="sd">        &quot;objects&quot;, &quot;List of rock-/cliff-object names to be loaded. If not specified then `amount` property is used for &quot;</span>
+<span class="sd">                   &quot;consequential loading. Type: list. Default: [].&quot;</span>
+<span class="sd">        &quot;amount&quot;, &quot;Amount of rock-/cliff-object to load. Type: int. If not specified, the amount will be set &quot;</span>
+<span class="sd">                  &quot;to the amount of suitable objects in the current section of a blend file. Must be bigger than 0.&quot;</span>
+<span class="sd">        &quot;sample_objects&quot;, &quot;Toggles the uniform sampling of objects to load. Takes into account `objects` and `amount` &quot;</span>
+<span class="sd">                          &quot;parameters. Type: bool. Default: False. Requires &#39;amount&#39; param to be defined.&quot;</span>
+<span class="sd">        &quot;render_levels&quot;, &quot;Number of subdivisions to perform when rendering. Type: int. Default: 3.&quot;</span>
+<span class="sd">        &quot;high_detail_mode&quot;, &quot;Flag for enabling HDM when possible. Type: boolean. Default: False.&quot;</span>
+<span class="sd">        &quot;reflection_amount&quot;, &quot;Reflection texture value. Type: float (min=0, max=1). Default: rock-specific.&quot;</span>
+<span class="sd">        &quot;reflection_roughness&quot;, &quot;Roughness texture value. Type: float (min=0, max=1). Default: rock-specific.&quot;</span>
+<span class="sd">        &quot;physics&quot;, &quot;Custom property for physics/rigidbody state. Type: boolean. Default: False.&quot;</span>
+<span class="sd">        &quot;scale&quot;, &quot;Scale of a rock as a 3d-vector with each value as a scaling factor per according dimension. &quot;</span>
+<span class="sd">                 &quot;Type: mathutils Vector. Default: [1, 1, 1].&quot;</span>
+<span class="sd">        &quot;HSV&quot;, &quot;Hue-Saturation-Value parameters of the HSV node. Type: list (3 values). Range: H: [0, 1], S: [0, 2], &quot;</span>
+<span class="sd">               &quot;V: [0, 2]. Default: rock-specific.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">LoaderInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RockEssentialsRockLoader.run"><a class="viewcode-back" href="../../../src.loader.RockEssentialsRockLoader.html#src.loader.RockEssentialsRockLoader.RockEssentialsRockLoader.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Loads rocks.&quot;&quot;&quot;</span>
+
+        <span class="n">rocks_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="s2">&quot;batches&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">for</span> <span class="n">subsec_num</span><span class="p">,</span> <span class="n">subsec_settings</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rocks_settings</span><span class="p">):</span>
+            <span class="n">subsec_config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">subsec_settings</span><span class="p">)</span>
+            <span class="n">subsec_objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_rocks</span><span class="p">(</span><span class="n">subsec_num</span><span class="p">,</span> <span class="n">subsec_config</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_rocks_properties</span><span class="p">(</span><span class="n">subsec_objects</span><span class="p">,</span> <span class="n">subsec_config</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RockEssentialsRockLoader._load_rocks"><a class="viewcode-back" href="../../../src.loader.RockEssentialsRockLoader.html#src.loader.RockEssentialsRockLoader.RockEssentialsRockLoader._load_rocks">[docs]</a>    <span class="k">def</span> <span class="nf">_load_rocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsec_num</span><span class="p">,</span> <span class="n">batch_config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Loads rocks.</span>
+
+<span class="sd">        :param subsec_num: Number of a corresponding cell (batch) in `rocks` list in configuration. Used for name generation.</span>
+<span class="sd">        :param batch_config: Config object that contains user-defined settings for a current batch.</span>
+<span class="sd">        :return: List of loaded objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loaded_objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">obj_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Rock&quot;</span><span class="p">,</span> <span class="s2">&quot;Cliff&quot;</span><span class="p">]</span>
+        <span class="n">amount_defined</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># get path to .blend file</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">)</span>
+        <span class="c1"># get list of obj names, empty if not defined</span>
+        <span class="n">objects</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="s2">&quot;objects&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="c1"># toggle object sampling</span>
+        <span class="n">sample_objects</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;sample_objects&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">obj_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">libraries</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="p">(</span><span class="n">data_from</span><span class="p">,</span> <span class="n">data_to</span><span class="p">):</span>
+            <span class="c1"># if list of names is empty</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">objects</span><span class="p">:</span>
+                <span class="c1"># get list of rocks suitable for loading - objects that are rocks or cliffs</span>
+                <span class="k">for</span> <span class="n">obj_type</span> <span class="ow">in</span> <span class="n">obj_types</span><span class="p">:</span>
+                    <span class="n">obj_list</span> <span class="o">+=</span> <span class="p">[</span><span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">data_from</span><span class="o">.</span><span class="n">objects</span> <span class="k">if</span> <span class="n">obj_type</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># if names are defined - get those that are available in this .blend file</span>
+                <span class="n">obj_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">data_from</span><span class="o">.</span><span class="n">objects</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">]</span>
+
+        <span class="c1"># get amount of rocks in this batch, set to all suitable if not defined</span>
+        <span class="k">if</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">has_param</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">):</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_int</span><span class="p">(</span><span class="s2">&quot;amount&quot;</span><span class="p">)</span>
+            <span class="n">amount_defined</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">amount</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Amount param can&#39;t be equal to zero!&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">amount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj_list</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">amount</span><span class="p">):</span>
+            <span class="c1"># load rock: choose random from the list if sampling is True, go through list if not</span>
+            <span class="k">if</span> <span class="n">sample_objects</span> <span class="ow">and</span> <span class="n">amount_defined</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">obj_list</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">obj_list</span><span class="p">[</span><span class="n">i</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj_list</span><span class="p">)]</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">wm</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;/Object&quot;</span><span class="p">,</span> <span class="n">obj</span><span class="p">),</span> <span class="n">filename</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span>
+                              <span class="n">directory</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s2">&quot;/Object&quot;</span><span class="p">))</span>
+            <span class="n">loaded_obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span>
+            <span class="c1"># set custom name for easier tracking in the scene</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span><span class="p">[</span><span class="n">obj</span><span class="p">]</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">obj</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">subsec_num</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="c1"># append to return list</span>
+            <span class="n">loaded_objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loaded_obj</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loaded_objects</span></div>
+
+<div class="viewcode-block" id="RockEssentialsRockLoader._set_rocks_properties"><a class="viewcode-back" href="../../../src.loader.RockEssentialsRockLoader.html#src.loader.RockEssentialsRockLoader.RockEssentialsRockLoader._set_rocks_properties">[docs]</a>    <span class="k">def</span> <span class="nf">_set_rocks_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">objects</span><span class="p">,</span> <span class="n">batch_config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Sets rocks properties in accordance to user-defined values.</span>
+
+<span class="sd">        :param objects: List of objects.</span>
+<span class="sd">        :param batch_config: Config object that contains user-defined settings for a current batch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get physics custom setting, &#39;passive&#39; if not defined</span>
+        <span class="n">physics</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;physics&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># get render level for a batch, &#39;3&#39; if not defined</span>
+        <span class="n">render_levels</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_int</span><span class="p">(</span><span class="s2">&quot;render_levels&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="c1"># get HDM custom setting for a batch, &#39;disabled&#39;\&#39;False&#39; if not defined</span>
+        <span class="n">high_detail_mode</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;high_detail_mode&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># get scale, original scale of 1 along all dims if not defined</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_vector3d</span><span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="c1"># get reflection amount and reflection roughness if defined</span>
+        <span class="k">if</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">has_param</span><span class="p">(</span><span class="s2">&quot;reflection_amount&quot;</span><span class="p">):</span>
+            <span class="n">reflection_amount</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;reflection_amount&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reflection_amount</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">has_param</span><span class="p">(</span><span class="s2">&quot;reflection_roughness&quot;</span><span class="p">):</span>
+            <span class="n">reflection_roughness</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;reflection_roughness&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reflection_roughness</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">has_param</span><span class="p">(</span><span class="s2">&quot;HSV&quot;</span><span class="p">):</span>
+            <span class="n">hsv</span> <span class="o">=</span> <span class="n">batch_config</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="s2">&quot;HSV&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hsv</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objects</span><span class="p">:</span>
+            <span class="c1"># set physics parameter</span>
+            <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;physics&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">physics</span>
+            <span class="c1"># set category id</span>
+            <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;category_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="c1"># set render value</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">modifiers</span><span class="p">[</span><span class="s2">&quot;Subsurf&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">render_levels</span> <span class="o">=</span> <span class="n">render_levels</span>
+            <span class="c1"># set scale</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span>
+            <span class="c1"># set HDM if enabled</span>
+            <span class="k">if</span> <span class="s2">&quot;01) High Detail Mode&quot;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;01) High Detail Mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">high_detail_mode</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;High Detail Mode is unavailable for &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;, omitting.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reflection_amount</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;05) Reflection Amount&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reflection_amount</span>
+            <span class="k">if</span> <span class="n">reflection_roughness</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;06) Reflection Roughness&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reflection_roughness</span>
+            <span class="k">if</span> <span class="n">hsv</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;02) Saturation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hsv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;03) Hue&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hsv</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;04) Value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hsv</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

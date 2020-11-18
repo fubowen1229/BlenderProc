@@ -1,0 +1,199 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.camera.Front3DCameraSampler &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.camera.Front3DCameraSampler</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.camera.CameraSampler</span> <span class="kn">import</span> <span class="n">CameraSampler</span>
+<span class="kn">from</span> <span class="nn">src.utility.BlenderUtility</span> <span class="kn">import</span> <span class="n">get_all_mesh_objects</span><span class="p">,</span> <span class="n">get_bounds</span>
+
+<div class="viewcode-block" id="Front3DCameraSampler"><a class="viewcode-back" href="../../../src.camera.Front3DCameraSampler.html#src.camera.Front3DCameraSampler.Front3DCameraSampler">[docs]</a><span class="k">class</span> <span class="nc">Front3DCameraSampler</span><span class="p">(</span><span class="n">CameraSampler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This Camera Sampler is similar to how the SuncgCameraSampler works.</span>
+
+<span class="sd">    It first searches for rooms, by using the different floors, which are used in each room.</span>
+<span class="sd">    It then counts the amount of 3D-Future objects on this particular floor, to check if this room is interesting</span>
+<span class="sd">    for creating cameras or not. The amount of needed objects can be changed via the config.</span>
+<span class="sd">    If the amount is set to 0, all rooms will have cameras, even if these rooms are empty.</span>
+
+<span class="sd">    The Front3D Loader provides information for using the min_interesting_score option.</span>
+<span class="sd">    Furthermore, it supports the no_background: True option, which is useful as the 3D-Front dataset has no windows</span>
+<span class="sd">    or doors to the outside world, which then leads to the background appearing in this shots, if not activated.</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+<span class="sd">        &quot;amount_of_objects_needed_per_room&quot;, &quot;The amount of objects needed per room, so that cameras are sampled in it.</span>
+<span class="sd">                                             &quot;This avoids that cameras are sampled in empty rooms.&quot;</span>
+<span class="sd">                                             &quot;Type: int. Default: 2&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">CameraSampler</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_floors</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<div class="viewcode-block" id="Front3DCameraSampler.run"><a class="viewcode-back" href="../../../src.camera.Front3DCameraSampler.html#src.camera.Front3DCameraSampler.Front3DCameraSampler.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">all_objects</span> <span class="o">=</span> <span class="n">get_all_mesh_objects</span><span class="p">()</span>
+        <span class="n">front_3D_objs</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">all_objects</span> <span class="k">if</span> <span class="s2">&quot;is_3D_future&quot;</span> <span class="ow">in</span> <span class="n">obj</span> <span class="ow">and</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;is_3D_future&quot;</span><span class="p">]]</span>
+
+        <span class="n">floor_objs</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">front_3D_objs</span> <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;floor&quot;</span><span class="p">)]</span>
+
+        <span class="c1"># count objects per floor -&gt; room</span>
+        <span class="n">floor_obj_counters</span> <span class="o">=</span> <span class="p">{</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">floor_objs</span><span class="p">}</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">front_3D_objs</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="s2">&quot;wall&quot;</span> <span class="ow">in</span> <span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;ceiling&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">location</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span>
+            <span class="k">for</span> <span class="n">floor_obj</span> <span class="ow">in</span> <span class="n">floor_objs</span><span class="p">:</span>
+                <span class="n">is_above</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position_is_above_object</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">floor_obj</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">is_above</span><span class="p">:</span>
+                    <span class="n">floor_obj_counters</span><span class="p">[</span><span class="n">floor_obj</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">amount_of_objects_needed_per_room</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_int</span><span class="p">(</span><span class="s2">&quot;amount_of_objects_needed_per_room&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">used_floors</span> <span class="o">=</span> <span class="p">[</span><span class="n">obj</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">floor_objs</span> <span class="k">if</span> <span class="n">floor_obj_counters</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">amount_of_objects_needed_per_room</span><span class="p">]</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Front3DCameraSampler.sample_and_validate_cam_pose"><a class="viewcode-back" href="../../../src.camera.Front3DCameraSampler.html#src.camera.Front3DCameraSampler.Front3DCameraSampler.sample_and_validate_cam_pose">[docs]</a>    <span class="k">def</span> <span class="nf">sample_and_validate_cam_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Samples a new camera pose, sets the parameters of the given camera object accordingly and validates it.</span>
+
+<span class="sd">        :param cam: The camera which contains only camera specific attributes.</span>
+<span class="sd">        :param cam_ob: The object linked to the camera which determines general properties like location/orientation</span>
+<span class="sd">        :param config: The config object describing how to sample</span>
+<span class="sd">        :return: True, if the sampled pose was valid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Sample used floor obj</span>
+        <span class="n">floor_obj</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">used_floors</span><span class="p">)</span>
+
+        <span class="c1"># Sample/set intrinsics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_cam_intrinsics</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Sample camera extrinsics (we do not set them yet for performance reasons)</span>
+        <span class="n">cam2world_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cam2world_matrix_from_cam_extrinsics</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Make sure the sampled location is inside the room =&gt; overwrite x and y and add offset to z</span>
+        <span class="n">bounding_box</span> <span class="o">=</span> <span class="n">get_bounds</span><span class="p">(</span><span class="n">floor_obj</span><span class="p">)</span>
+        <span class="n">min_corner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">max_corner</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">bounding_box</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">translation</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_corner</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">max_corner</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">translation</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_corner</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">max_corner</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">translation</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">floor_obj</span><span class="o">.</span><span class="n">location</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="c1"># Check if sampled pose is valid</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_pose_valid</span><span class="p">(</span><span class="n">floor_obj</span><span class="p">,</span> <span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">cam2world_matrix</span><span class="p">):</span>
+            <span class="c1"># Set camera extrinsics as the pose is valid</span>
+            <span class="n">cam_ob</span><span class="o">.</span><span class="n">matrix_world</span> <span class="o">=</span> <span class="n">cam2world_matrix</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="Front3DCameraSampler._is_pose_valid"><a class="viewcode-back" href="../../../src.camera.Front3DCameraSampler.html#src.camera.Front3DCameraSampler.Front3DCameraSampler._is_pose_valid">[docs]</a>    <span class="k">def</span> <span class="nf">_is_pose_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">floor_obj</span><span class="p">,</span> <span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">cam2world_matrix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Determines if the given pose is valid.</span>
+
+<span class="sd">        - Checks if the pose is above the floor</span>
+<span class="sd">        - Checks if the distance to objects is in the configured range</span>
+<span class="sd">        - Checks if the scene coverage score is above the configured threshold</span>
+
+<span class="sd">        :param floor_obj: The floor object of the room the camera was sampled in.</span>
+<span class="sd">        :param cam: The camera which contains only camera specific attributes.</span>
+<span class="sd">        :param cam_ob: The object linked to the camera which determines general properties like location/orientation</span>
+<span class="sd">        :param cam2world_matrix: The sampled camera extrinsics in form of a camera to world frame transformation matrix.</span>
+<span class="sd">        :return: True, if the pose is valid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position_is_above_object</span><span class="p">(</span><span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">to_translation</span><span class="p">(),</span> <span class="n">floor_obj</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_is_pose_valid</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">cam2world_matrix</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,116 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.writer.ObjectStateWriter &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.writer.ObjectStateWriter</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">src.utility.BlenderUtility</span> <span class="kn">import</span> <span class="n">get_all_mesh_objects</span>
+<span class="kn">from</span> <span class="nn">src.utility.ItemWriter</span> <span class="kn">import</span> <span class="n">ItemWriter</span>
+<span class="kn">from</span> <span class="nn">src.writer.WriterInterface</span> <span class="kn">import</span> <span class="n">WriterInterface</span>
+
+
+<div class="viewcode-block" id="ObjectStateWriter"><a class="viewcode-back" href="../../../src.writer.ObjectStateWriter.html#src.writer.ObjectStateWriter.ObjectStateWriter">[docs]</a><span class="k">class</span> <span class="nc">ObjectStateWriter</span><span class="p">(</span><span class="n">WriterInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Writes the state of all objects for each frame to a numpy file if no hfd5 file is available. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">WriterInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">object_writer</span> <span class="o">=</span> <span class="n">ItemWriter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_attribute</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ObjectStateWriter.run"><a class="viewcode-back" href="../../../src.writer.ObjectStateWriter.html#src.writer.ObjectStateWriter.ObjectStateWriter.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Collect all mesh objects and writes their id, name and pose.&quot;&quot;&quot;</span>
+        <span class="n">objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="nb">object</span> <span class="ow">in</span> <span class="n">get_all_mesh_objects</span><span class="p">():</span>
+            <span class="n">objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">object</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_attributes_to_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">object_writer</span><span class="p">,</span> <span class="n">objects</span><span class="p">,</span> <span class="s2">&quot;object_states_&quot;</span><span class="p">,</span> <span class="s2">&quot;object_states&quot;</span><span class="p">,</span>
+                                      <span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;rotation_euler&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ObjectStateWriter._get_attribute"><a class="viewcode-back" href="../../../src.writer.ObjectStateWriter.html#src.writer.ObjectStateWriter.ObjectStateWriter._get_attribute">[docs]</a>    <span class="k">def</span> <span class="nf">_get_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the value of the requested attribute for the given object.</span>
+
+<span class="sd">        :param object: The mesh object. Type: blender mesh type object.</span>
+<span class="sd">        :param attribute_name: The attribute name. Type: string.</span>
+<span class="sd">        :return: The attribute value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_attribute</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

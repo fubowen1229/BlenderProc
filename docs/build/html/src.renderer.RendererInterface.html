@@ -1,0 +1,200 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.renderer.RendererInterface module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.renderer.RendererInterface">
+<span id="src-renderer-rendererinterface-module"></span><h1>src.renderer.RendererInterface module<a class="headerlink" href="#module-src.renderer.RendererInterface" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.renderer.RendererInterface.RendererInterface">
+<em class="property">class </em><code class="descclassname">src.renderer.RendererInterface.</code><code class="descname">RendererInterface</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.main.Module.html#src.main.Module.Module" title="src.main.Module.Module"><code class="xref py py-class docutils literal"><span class="pre">src.main.Module.Module</span></code></a></p>
+<p><strong>Configuration</strong>:</p>
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface._configure_renderer">
+<code class="descname">_configure_renderer</code><span class="sig-paren">(</span><em>default_samples=256</em>, <em>use_denoiser=False</em>, <em>default_denoiser='Intel'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface._configure_renderer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface._configure_renderer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets many different render parameters which can be adjusted via the config.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>default_samples</strong> – Default number of samples to render for each pixel</li>
+<li><strong>use_denoiser</strong> – If true, a denoiser is used, only use this on color information</li>
+<li><strong>default_denoiser</strong> – Either “Intel” or “Blender”, “Intel” performs much better in most cases</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface._disable_all_denoiser">
+<code class="descname">_disable_all_denoiser</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface._disable_all_denoiser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface._disable_all_denoiser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disables all denoiser.</p>
+<p>At the moment this includes the cycles and the intel denoiser.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface._register_output">
+<code class="descname">_register_output</code><span class="sig-paren">(</span><em>default_prefix</em>, <em>default_key</em>, <em>suffix</em>, <em>version</em>, <em>unique_for_camposes=True</em>, <em>output_key_parameter_name='output_key'</em>, <em>output_file_prefix_parameter_name='output_file_prefix'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface._register_output"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface._register_output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers new output type using configured key and file prefix.</p>
+<p>If distance rendering is enabled, this will also register the corresponding distance output type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>default_prefix</strong> – The default prefix of the generated files.</li>
+<li><strong>default_key</strong> – The default key which should be used for storing the output in merged file.</li>
+<li><strong>suffix</strong> – The suffix of the generated files.</li>
+<li><strong>version</strong> – The version number which will be stored at key_version in the final merged file.</li>
+<li><strong>unique_for_camposes</strong> – True if the registered output is unique for all the camera poses</li>
+<li><strong>output_key_parameter_name</strong> – The parameter name to use for retrieving the output key from the config.</li>
+<li><strong>output_file_prefix_parameter_name</strong> – The parameter name to use for retrieving the output file prefix from the config.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface._render">
+<code class="descname">_render</code><span class="sig-paren">(</span><em>default_prefix</em>, <em>custom_file_path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface._render"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface._render" title="Permalink to this definition">¶</a></dt>
+<dd><p>Renders each registered keypoint.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>default_prefix</strong> – The default prefix of the output files.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface._write_distance_to_file">
+<code class="descname">_write_distance_to_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface._write_distance_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface._write_distance_to_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configures the renderer, s.t. the z-values computed for the next rendering are directly written to file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface._write_normal_to_file">
+<code class="descname">_write_normal_to_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface._write_normal_to_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface._write_normal_to_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface.add_alpha_channel_to_textures">
+<code class="descname">add_alpha_channel_to_textures</code><span class="sig-paren">(</span><em>blurry_edges</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface.add_alpha_channel_to_textures"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface.add_alpha_channel_to_textures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds transparency to all textures, which contain an .png image as an image input</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>blurry_edges</strong> – If True, the edges of the alpha channel might be blurry,
+this causes errors if the alpha channel should only be 0 or 1</td>
+</tr>
+</tbody>
+</table>
+<p>Be careful, when you replace the original texture with something else (Segmentation, …),
+the necessary texture node gets lost. By copying it into a new material as done in the SegMapRenderer, you
+can keep the transparency even for those nodes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.renderer.RendererInterface.RendererInterface.add_alpha_texture_node">
+<code class="descname">add_alpha_texture_node</code><span class="sig-paren">(</span><em>used_material</em>, <em>new_material</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/renderer/RendererInterface.html#RendererInterface.add_alpha_texture_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.renderer.RendererInterface.RendererInterface.add_alpha_texture_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds to a predefined new_material a texture node from an existing material (used_material)
+This is necessary to connect it later on in the add_alpha_channel_to_textures
+:param used_material: existing material, which might contain a texture node with a .png texture
+:param new_material: a new material, which will get a copy of this texture node
+:return: the modified new_material, if no texture node was found, the original new_material</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.renderer.RendererInterface.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

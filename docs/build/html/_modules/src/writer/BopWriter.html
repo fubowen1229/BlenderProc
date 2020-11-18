@@ -1,0 +1,485 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.writer.BopWriter &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.writer.BopWriter</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">png</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+<span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="n">Euler</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">Vector</span>
+
+<span class="kn">from</span> <span class="nn">src.utility.BlenderUtility</span> <span class="kn">import</span> <span class="n">get_all_mesh_objects</span><span class="p">,</span> <span class="n">load_image</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+<span class="kn">from</span> <span class="nn">src.writer.WriterInterface</span> <span class="kn">import</span> <span class="n">WriterInterface</span>
+
+
+<div class="viewcode-block" id="load_json"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.load_json">[docs]</a><span class="k">def</span> <span class="nf">load_json</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">keys_to_int</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Loads content of a JSON file.</span>
+<span class="sd">    From the BOP toolkit (https://github.com/thodan/bop_toolkit).</span>
+
+<span class="sd">    :param path: Path to the JSON file.</span>
+<span class="sd">    :return: Content of the loaded JSON file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Keys to integers.</span>
+    <span class="k">def</span> <span class="nf">convert_keys_to_int</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span> <span class="k">else</span> <span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">keys_to_int</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">object_hook</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">convert_keys_to_int</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">content</span></div>
+
+
+<div class="viewcode-block" id="save_json"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.save_json">[docs]</a><span class="k">def</span> <span class="nf">save_json</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Saves the content to a JSON file in a human-friendly format.</span>
+<span class="sd">    From the BOP toolkit (https://github.com/thodan/bop_toolkit).</span>
+
+<span class="sd">    :param path: Path to the output JSON file.</span>
+<span class="sd">    :param content: Dictionary/list to save.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;{</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">content_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">elem_id</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content_sorted</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                    <span class="s1">&#39;  </span><span class="se">\&quot;</span><span class="si">{}</span><span class="se">\&quot;</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">elem_id</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;}&#39;</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;[</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">elem_id</span><span class="p">,</span> <span class="n">elem</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">content</span><span class="p">):</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;  </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">elem_id</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">content</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;]&#39;</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="save_depth"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.save_depth">[docs]</a><span class="k">def</span> <span class="nf">save_depth</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">im</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Saves a depth image (16-bit) to a PNG file.</span>
+<span class="sd">    From the BOP toolkit (https://github.com/thodan/bop_toolkit).</span>
+
+<span class="sd">    :param path: Path to the output depth image file.</span>
+<span class="sd">    :param im: ndarray with the depth image to save.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.png&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Only PNG format is currently supported.&#39;</span><span class="p">)</span>
+
+    <span class="n">im</span><span class="p">[</span><span class="n">im</span> <span class="o">&gt;</span> <span class="mi">65535</span><span class="p">]</span> <span class="o">=</span> <span class="mi">65535</span>
+    <span class="n">im_uint16</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">im</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+
+    <span class="c1"># PyPNG library can save 16-bit PNG and is faster than imageio.imwrite().</span>
+    <span class="n">w_depth</span> <span class="o">=</span> <span class="n">png</span><span class="o">.</span><span class="n">Writer</span><span class="p">(</span><span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">greyscale</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bitdepth</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">w_depth</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">im_uint16</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">im</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span></div>
+
+
+<div class="viewcode-block" id="BopWriter"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter">[docs]</a><span class="k">class</span> <span class="nc">BopWriter</span><span class="p">(</span><span class="n">WriterInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Saves the synthesized dataset in the BOP format. The dataset is split</span>
+<span class="sd">        into chunks which are saved as individual &quot;scenes&quot;. For more details</span>
+<span class="sd">        about the BOP format, visit the BOP toolkit docs:</span>
+<span class="sd">        https://github.com/thodan/bop_toolkit/blob/master/docs/bop_datasets_format.md</span>
+
+<span class="sd">    **Attributes per object**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Keyword&quot;, &quot;Description&quot;</span>
+
+<span class="sd">        &quot;dataset&quot;, &quot;Annotations for objects of this dataset will be saved. Type: string.&quot;</span>
+<span class="sd">        &quot;append_to_existing_output&quot;, &quot;If true, the new frames will be appended to the existing ones. &quot;</span>
+<span class="sd">                                    &quot;Type: bool. Default: False&quot;</span>
+<span class="sd">        &quot;ignore_dist_thres&quot;, &quot;Distance in meters between camera and object after which it is ignored. Mostly due to&quot;</span>
+<span class="sd">                             &quot;failed physics. Type: float. Default: 5.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">WriterInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Parse configuration.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;dataset&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">append_to_existing_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;append_to_existing_output&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># Distance in meteres to object after which it is ignored. Mostly due to failed physics.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ignore_dist_thres</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_float</span><span class="p">(</span><span class="s2">&quot;ignore_dist_thres&quot;</span><span class="p">,</span> <span class="mf">5.</span><span class="p">)</span>
+
+        <span class="c1"># Number of frames saved in each chunk.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">frames_per_chunk</span> <span class="o">=</span> <span class="mi">1000</span>
+
+        <span class="c1"># Multiply the output depth image with this factor to get depth in mm.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth_scale</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+        <span class="c1"># Format of the depth images.</span>
+        <span class="n">depth_ext</span> <span class="o">=</span> <span class="s1">&#39;.png&#39;</span>
+
+        <span class="c1"># Output paths.</span>
+        <span class="n">base_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_determine_output_dir</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_path</span><span class="p">,</span> <span class="s1">&#39;bop_data&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunks_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="s1">&#39;train_pbr&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">camera_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">,</span> <span class="s1">&#39;camera.json&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rgb_tpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">chunks_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{chunk_id:06d}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;rgb&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{im_id:06d}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{im_type}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth_tpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">chunks_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{chunk_id:06d}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;depth&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{im_id:06d}</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">depth_ext</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunk_camera_tpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">chunks_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{chunk_id:06d}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;scene_camera.json&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunk_gt_tpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">chunks_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{chunk_id:06d}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;scene_gt.json&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Create the output directory structure.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunks_dir</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_to_existing_output</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The output folder already exists: </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">))</span>
+
+<div class="viewcode-block" id="BopWriter.run"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Stores frames and annotations for objects from the specified dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Select objects from the specified dataset.</span>
+        <span class="n">all_mesh_objects</span> <span class="o">=</span> <span class="n">get_all_mesh_objects</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset_objects</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">all_mesh_objects</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;bop_dataset_name&quot;</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">obj</span><span class="p">[</span><span class="s2">&quot;bop_dataset_name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dataset_objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="c1"># Check if there is any object from the specified dataset.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset_objects</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The scene does not contain any object from the &quot;</span>
+                            <span class="s2">&quot;specified dataset: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">))</span>
+
+        <span class="c1"># Get the camera.</span>
+        <span class="n">cam_ob</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">camera</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cam</span> <span class="o">=</span> <span class="n">cam_ob</span><span class="o">.</span><span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cam_pose</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">)</span>
+
+        <span class="c1"># Save the data.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_camera</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_frames</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BopWriter._get_camera_attribute"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter._get_camera_attribute">[docs]</a>    <span class="k">def</span> <span class="nf">_get_camera_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cam_pose</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the value of the requested attribute for the given object.</span>
+
+<span class="sd">        :param cam_pose: camera pose</span>
+<span class="sd">        :param attribute_name: The attribute name.</span>
+<span class="sd">        :return: The attribute value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span> <span class="o">=</span> <span class="n">cam_pose</span>
+
+        <span class="k">if</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s2">&quot;fov_x&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cam</span><span class="o">.</span><span class="n">angle_x</span>
+        <span class="k">elif</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s2">&quot;fov_y&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cam</span><span class="o">.</span><span class="n">angle_y</span>
+        <span class="k">elif</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s2">&quot;shift_x&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cam</span><span class="o">.</span><span class="n">shift_x</span>
+        <span class="k">elif</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s2">&quot;shift_y&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cam</span><span class="o">.</span><span class="n">shift_y</span>
+        <span class="k">elif</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s2">&quot;half_fov_x&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cam</span><span class="o">.</span><span class="n">angle_x</span> <span class="o">*</span> <span class="mf">0.5</span>
+        <span class="k">elif</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s2">&quot;half_fov_y&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cam</span><span class="o">.</span><span class="n">angle_y</span> <span class="o">*</span> <span class="mf">0.5</span>
+        <span class="k">elif</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s1">&#39;loaded_intrinsics&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cam</span><span class="p">[</span><span class="s1">&#39;loaded_intrinsics&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_attribute</span><span class="p">(</span><span class="n">cam_ob</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BopWriter._get_object_attribute"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter._get_object_attribute">[docs]</a>    <span class="k">def</span> <span class="nf">_get_object_attribute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">object</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the value of the requested attribute for the given object.</span>
+
+<span class="sd">        :param object: The mesh object.</span>
+<span class="sd">        :param attribute_name: The attribute name.</span>
+<span class="sd">        :return: The attribute value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">attribute_name</span> <span class="o">==</span> <span class="s2">&quot;id&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">object</span><span class="p">[</span><span class="s2">&quot;category_id&quot;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_attribute</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">attribute_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BopWriter.get_camK_from_blender_attributes"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter.get_camK_from_blender_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">get_camK_from_blender_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cam_pose</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Constructs the camera matrix K.</span>
+
+<span class="sd">        :param cam_pose: Camera info.</span>
+<span class="sd">        :return: camera matrix K as 9x1 list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">shift_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_camera_attribute</span><span class="p">(</span><span class="n">cam_pose</span><span class="p">,</span> <span class="s1">&#39;shift_x&#39;</span><span class="p">)</span>
+        <span class="n">shift_y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_camera_attribute</span><span class="p">(</span><span class="n">cam_pose</span><span class="p">,</span> <span class="s1">&#39;shift_y&#39;</span><span class="p">)</span>
+        <span class="n">syn_cam_K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_camera_attribute</span><span class="p">(</span><span class="n">cam_pose</span><span class="p">,</span> <span class="s1">&#39;loaded_intrinsics&#39;</span><span class="p">)</span>
+        <span class="n">width</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">resolution_x</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">resolution_y</span>
+
+        <span class="n">cam_K</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]</span> <span class="o">*</span> <span class="mi">9</span>
+        <span class="n">cam_K</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="n">max_resolution</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+        
+        <span class="n">cam_K</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_cam_K</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">cam_K</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">syn_cam_K</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+ 
+        <span class="n">cam_K</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">width</span><span class="o">/</span><span class="mf">2.</span> <span class="o">-</span> <span class="n">shift_x</span> <span class="o">*</span> <span class="n">max_resolution</span>
+        <span class="n">cam_K</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">height</span><span class="o">/</span><span class="mf">2.</span> <span class="o">+</span> <span class="n">shift_y</span> <span class="o">*</span> <span class="n">max_resolution</span>
+
+        <span class="k">return</span> <span class="n">cam_K</span></div>
+
+<div class="viewcode-block" id="BopWriter._write_camera"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter._write_camera">[docs]</a>    <span class="k">def</span> <span class="nf">_write_camera</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Writes camera.json into dataset_dir.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">width</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">resolution_x</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">resolution_y</span>
+
+        <span class="n">cam_K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_camK_from_blender_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cam_pose</span><span class="p">)</span>
+        <span class="n">camera</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;cx&#39;</span><span class="p">:</span> <span class="n">cam_K</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+                  <span class="s1">&#39;cy&#39;</span><span class="p">:</span> <span class="n">cam_K</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+                  <span class="s1">&#39;depth_scale&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_scale</span><span class="p">,</span>
+                  <span class="s1">&#39;fx&#39;</span><span class="p">:</span> <span class="n">cam_K</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                  <span class="s1">&#39;fy&#39;</span><span class="p">:</span> <span class="n">cam_K</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+                  <span class="s1">&#39;height&#39;</span><span class="p">:</span> <span class="n">height</span><span class="p">,</span>
+                  <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="n">width</span><span class="p">}</span>
+
+        <span class="n">save_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">camera_path</span><span class="p">,</span> <span class="n">camera</span><span class="p">)</span>
+
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="BopWriter._get_frame_gt"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter._get_frame_gt">[docs]</a>    <span class="k">def</span> <span class="nf">_get_frame_gt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns GT annotations for the active camera.</span>
+
+<span class="sd">        :return: A list of GT annotations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">camera_rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_camera_attribute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cam_pose</span><span class="p">,</span> <span class="s1">&#39;rotation_euler&#39;</span><span class="p">)</span>
+        <span class="n">camera_translation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_camera_attribute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cam_pose</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="BopWriter._get_frame_camera"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter._get_frame_camera">[docs]</a>        <span class="n">H_c2w</span> <span class="o">=</span> <span class="n">Matrix</span><span class="o">.</span><span class="n">Translation</span><span class="p">(</span><span class="n">Vector</span><span class="p">(</span><span class="n">camera_translation</span><span class="p">))</span> <span class="o">@</span> <span class="n">Euler</span><span class="p">(</span>
+            <span class="n">camera_rotation</span><span class="p">,</span> <span class="s1">&#39;XYZ&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">to_4x4</span><span class="p">()</span>
+
+        <span class="c1"># Blender to opencv coordinates.</span>
+        <span class="n">H_c2w_opencv</span> <span class="o">=</span> <span class="n">H_c2w</span> <span class="o">@</span> <span class="n">Matrix</span><span class="o">.</span><span class="n">Rotation</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="o">-</span><span class="mi">180</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">)</span>
+
+        <span class="n">frame_gt</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_objects</span><span class="p">):</span>
+            <span class="n">object_rotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;rotation_euler&#39;</span><span class="p">)</span>
+            <span class="n">object_translation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">)</span>
+            <span class="n">H_m2w</span> <span class="o">=</span> <span class="n">Matrix</span><span class="o">.</span><span class="n">Translation</span><span class="p">(</span><span class="n">Vector</span><span class="p">(</span><span class="n">object_translation</span><span class="p">))</span> <span class="o">@</span> <span class="n">Euler</span><span class="p">(</span>
+                <span class="n">object_rotation</span><span class="p">,</span> <span class="s1">&#39;XYZ&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">()</span><span class="o">.</span><span class="n">to_4x4</span><span class="p">()</span>
+
+            <span class="n">cam_H_m2c</span> <span class="o">=</span> <span class="p">(</span><span class="n">H_m2w</span><span class="o">.</span><span class="n">inverted</span><span class="p">()</span> <span class="o">@</span> <span class="n">H_c2w_opencv</span><span class="p">)</span><span class="o">.</span><span class="n">inverted</span><span class="p">()</span>
+
+            <span class="n">cam_R_m2c</span> <span class="o">=</span> <span class="n">cam_H_m2c</span><span class="o">.</span><span class="n">to_quaternion</span><span class="p">()</span><span class="o">.</span><span class="n">to_matrix</span><span class="p">()</span>
+            <span class="n">cam_R_m2c</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cam_R_m2c</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">cam_R_m2c</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">cam_R_m2c</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="n">cam_t_m2c</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cam_H_m2c</span><span class="o">.</span><span class="n">to_translation</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1000.</span><span class="p">)</span>
+
+            <span class="c1"># ignore examples that fell through the plane</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">cam_t_m2c</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ignore_dist_thres</span> <span class="o">*</span> <span class="mf">1000.</span><span class="p">:</span>
+                <span class="n">frame_gt</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;cam_R_m2c&#39;</span><span class="p">:</span> <span class="n">cam_R_m2c</span><span class="p">,</span>
+                    <span class="s1">&#39;cam_t_m2c&#39;</span><span class="p">:</span> <span class="n">cam_t_m2c</span><span class="p">,</span>
+                    <span class="s1">&#39;obj_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">)</span>
+                <span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ignored obj, &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_object_attribute</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">frame_gt</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_frame_camera</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns camera parameters for the active camera.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;cam_K&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_camK_from_blender_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cam_pose</span><span class="p">)),</span>
+            <span class="s1">&#39;depth_scale&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_scale</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="BopWriter._write_frames"><a class="viewcode-back" href="../../../src.writer.BopWriter.html#src.writer.BopWriter.BopWriter._write_frames">[docs]</a>    <span class="k">def</span> <span class="nf">_write_frames</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Writes images, GT annotations and camera info.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Paths to the already existing chunk folders (such folders may exist</span>
+        <span class="c1"># when appending to an existing dataset).</span>
+        <span class="n">chunk_dirs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunks_dir</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">)))</span>
+        <span class="n">chunk_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">chunk_dirs</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+
+        <span class="c1"># Get ID&#39;s of the last already existing chunk and frame.</span>
+        <span class="n">curr_chunk_id</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">curr_frame_id</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk_dirs</span><span class="p">):</span>
+            <span class="n">last_chunk_dir</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">chunk_dirs</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">last_chunk_gt_fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">last_chunk_dir</span><span class="p">,</span> <span class="s1">&#39;scene_gt.json&#39;</span><span class="p">)</span>
+            <span class="n">chunk_gt</span> <span class="o">=</span> <span class="n">load_json</span><span class="p">(</span><span class="n">last_chunk_gt_fpath</span><span class="p">,</span> <span class="n">keys_to_int</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># Last chunk and frame ID&#39;s.</span>
+            <span class="n">last_chunk_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">last_chunk_dir</span><span class="p">))</span>
+            <span class="n">last_frame_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">chunk_gt</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># Current chunk and frame ID&#39;s.</span>
+            <span class="n">curr_chunk_id</span> <span class="o">=</span> <span class="n">last_chunk_id</span>
+            <span class="n">curr_frame_id</span> <span class="o">=</span> <span class="n">last_frame_id</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">curr_frame_id</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames_per_chunk</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">curr_chunk_id</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">curr_frame_id</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Initialize structures for the GT annotations and camera info.</span>
+        <span class="n">chunk_gt</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">chunk_camera</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">curr_frame_id</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Load GT and camera info of the chunk we are appending to.</span>
+            <span class="n">chunk_gt</span> <span class="o">=</span> <span class="n">load_json</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">chunk_gt_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">),</span> <span class="n">keys_to_int</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">chunk_camera</span> <span class="o">=</span> <span class="n">load_json</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">chunk_camera_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">),</span> <span class="n">keys_to_int</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Go through all frames.</span>
+        <span class="n">num_new_frames</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span> <span class="o">-</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_start</span>
+        <span class="k">for</span> <span class="n">frame_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_start</span><span class="p">,</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span><span class="p">):</span>
+            <span class="c1"># Activate frame.</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_set</span><span class="p">(</span><span class="n">frame_id</span><span class="p">)</span>
+
+            <span class="c1"># Reset data structures and prepare folders for a new chunk.</span>
+            <span class="k">if</span> <span class="n">curr_frame_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">chunk_gt</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">chunk_camera</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rgb_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">,</span> <span class="n">im_id</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">im_type</span><span class="o">=</span><span class="s1">&#39;PNG&#39;</span><span class="p">)))</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">depth_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">,</span> <span class="n">im_id</span><span class="o">=</span><span class="mi">0</span><span class="p">)))</span>
+
+            <span class="c1"># Get GT annotations and camera info for the current frame.</span>
+            <span class="n">chunk_gt</span><span class="p">[</span><span class="n">curr_frame_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame_gt</span><span class="p">()</span>
+            <span class="n">chunk_camera</span><span class="p">[</span><span class="n">curr_frame_id</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame_camera</span><span class="p">()</span>
+
+            <span class="c1"># Copy the resulting RGB image.</span>
+            <span class="n">rgb_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_registered_output_by_key</span><span class="p">(</span><span class="s2">&quot;colors&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">rgb_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;RGB image has not been rendered.&quot;</span><span class="p">)</span>
+            <span class="n">image_type</span> <span class="o">=</span> <span class="s1">&#39;.png&#39;</span> <span class="k">if</span> <span class="n">rgb_output</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;png&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;.jpg&#39;</span>
+            <span class="n">rgb_fpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rgb_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">,</span> <span class="n">im_id</span><span class="o">=</span><span class="n">curr_frame_id</span><span class="p">,</span> <span class="n">im_type</span><span class="o">=</span><span class="n">image_type</span><span class="p">)</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">rgb_output</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span> <span class="o">%</span> <span class="n">frame_id</span><span class="p">,</span> <span class="n">rgb_fpath</span><span class="p">)</span>
+
+            <span class="c1"># Load the resulting dist image.</span>
+            <span class="n">dist_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_registered_output_by_key</span><span class="p">(</span><span class="s2">&quot;distance&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dist_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Distance image has not been rendered.&quot;</span><span class="p">)</span>
+            <span class="n">depth</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_postprocess</span><span class="p">(</span><span class="n">dist_output</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span> <span class="o">%</span> <span class="n">frame_id</span><span class="p">,</span> <span class="s2">&quot;distance&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Scale the depth to retain a higher precision (the depth is saved</span>
+            <span class="c1"># as a 16-bit PNG image with range 0-65535).</span>
+            <span class="n">depth_mm</span> <span class="o">=</span> <span class="mf">1000.0</span> <span class="o">*</span> <span class="n">depth</span>  <span class="c1"># [m] -&gt; [mm]</span>
+            <span class="n">depth_mm_scaled</span> <span class="o">=</span> <span class="n">depth_mm</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth_scale</span><span class="p">)</span>
+
+            <span class="c1"># Save the scaled depth image.</span>
+            <span class="n">depth_fpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">,</span> <span class="n">im_id</span><span class="o">=</span><span class="n">curr_frame_id</span><span class="p">)</span>
+            <span class="n">save_depth</span><span class="p">(</span><span class="n">depth_fpath</span><span class="p">,</span> <span class="n">depth_mm_scaled</span><span class="p">)</span>
+
+            <span class="c1"># Save the chunk info if we are at the end of a chunk or at the last new frame.</span>
+            <span class="k">if</span> <span class="p">((</span><span class="n">curr_frame_id</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames_per_chunk</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span>\
+                  <span class="p">(</span><span class="n">frame_id</span> <span class="o">==</span> <span class="n">num_new_frames</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+
+                <span class="c1"># Save GT annotations.</span>
+                <span class="n">save_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_gt_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">),</span> <span class="n">chunk_gt</span><span class="p">)</span>
+
+                <span class="c1"># Save camera info.</span>
+                <span class="n">save_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chunk_camera_tpath</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunk_id</span><span class="o">=</span><span class="n">curr_chunk_id</span><span class="p">),</span> <span class="n">chunk_camera</span><span class="p">)</span>
+
+                <span class="c1"># Update ID&#39;s.</span>
+                <span class="n">curr_chunk_id</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">curr_frame_id</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">curr_frame_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

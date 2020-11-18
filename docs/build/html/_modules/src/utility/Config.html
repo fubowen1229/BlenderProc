@@ -1,0 +1,386 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.utility.Config &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.utility.Config</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">mathutils</span>
+
+<span class="kn">import</span> <span class="nn">src.utility.Utility</span> <span class="k">as</span> <span class="nn">Utility</span>
+<span class="kn">from</span> <span class="nn">src.main.Provider</span> <span class="kn">import</span> <span class="n">Provider</span>
+<span class="kn">from</span> <span class="nn">src.main.GlobalStorage</span> <span class="kn">import</span> <span class="n">GlobalStorage</span>
+
+<div class="viewcode-block" id="Config"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config">[docs]</a><span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+<div class="viewcode-block" id="Config.has_param"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.has_param">[docs]</a>    <span class="k">def</span> <span class="nf">has_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check if parameter is defined in config </span>
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations&quot;]</span>
+<span class="sd">        :param block: A dict containing the configuration. If none, the whole data of this config object will be used.</span>
+<span class="sd">        :return: True if parameter exists, False if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">block</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">delimiter_pos</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="n">block_name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[:</span><span class="n">delimiter_pos</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">block_name</span> <span class="ow">in</span> <span class="n">block</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="n">block_name</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_param</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">delimiter_pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">block</span><span class="p">[</span><span class="n">block_name</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">block</span>
+            
+        <span class="k">return</span> <span class="kc">False</span></div>
+            
+<div class="viewcode-block" id="Config._get_value"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config._get_value">[docs]</a>    <span class="k">def</span> <span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_invoke_provider</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">global_check</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the value of the parameter with the given name inside the given block.</span>
+
+<span class="sd">        Basically just a recursive dict lookup, making sure the parameter exists, otherwise an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param block: A dict containing the configuration. If none, the whole data of this config object will be used.</span>
+<span class="sd">        :param allow_invoke_provider: If set to True, then a provider is automatically invoked if the parameter value is a dict.</span>
+<span class="sd">        :return: The value of the parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">block</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="k">if</span> <span class="s2">&quot;/&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="n">delimiter_pos</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+            <span class="n">block_name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[:</span><span class="n">delimiter_pos</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">block_name</span> <span class="ow">in</span> <span class="n">block</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="n">block_name</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">delimiter_pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">block</span><span class="p">[</span><span class="n">block_name</span><span class="p">],</span> <span class="n">allow_invoke_provider</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="s2">&quot;No such configuration block &#39;&quot;</span> <span class="o">+</span> <span class="n">block_name</span> <span class="o">+</span> <span class="s2">&quot;&#39;!&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">block</span><span class="p">:</span>
+
+                <span class="c1"># Check for whether a provider should be invoked</span>
+                <span class="k">if</span> <span class="n">allow_invoke_provider</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="n">name</span><span class="p">])</span> <span class="ow">is</span> <span class="nb">dict</span><span class="p">:</span>
+                    <span class="n">block</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">Utility</span><span class="o">.</span><span class="n">build_provider_based_on_config</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+
+                <span class="c1"># If the parameter is set to a provider object, call the provider to return the parameter value</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="n">name</span><span class="p">],</span> <span class="n">Provider</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">block</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">block</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">global_check</span> <span class="ow">and</span> <span class="n">GlobalStorage</span><span class="o">.</span><span class="n">has_param</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+                <span class="c1"># this might also throw an NotFoundError</span>
+                <span class="k">return</span> <span class="n">GlobalStorage</span><span class="o">.</span><span class="n">get_global_config</span><span class="p">()</span><span class="o">.</span><span class="n">_get_value</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">allow_invoke_provider</span><span class="p">,</span> <span class="n">global_check</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">NotFoundError</span><span class="p">(</span><span class="s2">&quot;No such configuration &#39;&quot;</span> <span class="o">+</span> <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;&#39;!&quot;</span><span class="p">)</span></div>
+            
+<div class="viewcode-block" id="Config._get_value_with_fallback"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config._get_value_with_fallback">[docs]</a>    <span class="k">def</span> <span class="nf">_get_value_with_fallback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_invoke_provider</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the value of the given parameter with the given name.</span>
+
+<span class="sd">        If the parameter does not exist, the given fallback value is returned.</span>
+<span class="sd">        If no fallback is given, an error is thrown in such a case.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value.</span>
+<span class="sd">        :param allow_invoke_provider: If set to True, then a provider is automatically invoked if the parameter value is a dict.</span>
+<span class="sd">        :return: The value of the parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">allow_invoke_provider</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">NotFoundError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fallback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">fallback</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span></div>
+
+<div class="viewcode-block" id="Config.get_raw_dict"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_raw_dict">[docs]</a>    <span class="k">def</span> <span class="nf">get_raw_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the complete dict stored at the given parameter path.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_with_fallback</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_raw_value"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_raw_value">[docs]</a>    <span class="k">def</span> <span class="nf">get_raw_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the raw value stored at the given parameter path.</span>
+<span class="sd">        If a provider is specified at the given parameter path, then the provider is first invoked and the result is directly returned.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The raw value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_with_fallback</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_int"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_int">[docs]</a>    <span class="k">def</span> <span class="nf">get_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the integer value stored at the given parameter path.</span>
+
+<span class="sd">        If the value is no integer, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The integer value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_with_fallback</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert &#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; to int!&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_bool"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_bool">[docs]</a>    <span class="k">def</span> <span class="nf">get_bool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the boolean value stored at the given parameter path.</span>
+
+<span class="sd">        If the value is no boolean, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The boolean value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_with_fallback</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert &#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; to bool!&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_float"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_float">[docs]</a>    <span class="k">def</span> <span class="nf">get_float</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the float value stored at the given parameter path.</span>
+
+<span class="sd">        If the value is no float, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The float value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_with_fallback</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert &#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; to float!&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_string"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_string">[docs]</a>    <span class="k">def</span> <span class="nf">get_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the string value stored at the given parameter path.</span>
+
+<span class="sd">        If the value is no string, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The string value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_with_fallback</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert &#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; to string!&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_list"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_list">[docs]</a>    <span class="k">def</span> <span class="nf">get_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the list stored at the given parameter path.</span>
+
+<span class="sd">        If the value is no list, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value_with_fallback</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Vector</span><span class="p">):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert &#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; to list!&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="Config.get_vector"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_vector">[docs]</a>    <span class="k">def</span> <span class="nf">get_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the vector stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to mathutils vector, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :param dimensions: If not None, specifies the required number of dimensions. If the configured vector has not exactly this number of dimensions, an error is thrown.</span>
+<span class="sd">        :return: The vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dimensions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">dimensions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; must have exactly &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; dimensions!&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Vector</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert &#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; to a mathutils vector!&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="Config.get_vector2d"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_vector2d">[docs]</a>    <span class="k">def</span> <span class="nf">get_vector2d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the vector stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to an mathutils vector, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vector</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_vector3d"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_vector3d">[docs]</a>    <span class="k">def</span> <span class="nf">get_vector3d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the vector stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to an mathutils vector, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vector</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_vector4d"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_vector4d">[docs]</a>    <span class="k">def</span> <span class="nf">get_vector4d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the vector stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to an mathutils vector, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The vector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_vector</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_matrix"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">get_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the matrix stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to mathutils matrix, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :param dimensions: If not None, specifies the required number of dimensions. If the configured matrix has not exactly this dimensional, an error is thrown.</span>
+<span class="sd">        :return: The matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_raw_value</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dimensions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="n">dimensions</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">==</span> <span class="n">dimensions</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; must be exactly &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;x&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;-dimensional!&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">mathutils</span><span class="o">.</span><span class="n">Matrix</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Cannot convert &#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&#39; to a mathutils matrix!&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="Config.get_matrix_2x2"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_matrix_2x2">[docs]</a>    <span class="k">def</span> <span class="nf">get_matrix_2x2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the 2x2 matrix stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to an mathutils matrix, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_matrix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_matrix_3x3"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_matrix_3x3">[docs]</a>    <span class="k">def</span> <span class="nf">get_matrix_3x3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the 3x3 matrix stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to an mathutils matrix, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_matrix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Config.get_matrix_4x4"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.Config.get_matrix_4x4">[docs]</a>    <span class="k">def</span> <span class="nf">get_matrix_4x4</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the 3x3 matrix stored at the given parameter path.</span>
+
+<span class="sd">        If the value cannot be converted to an mathutils matrix, an error is thrown.</span>
+
+<span class="sd">        :param name: The name of the parameter. &quot;/&quot; can be used to represent nested parameters (e.q. &quot;render/iterations&quot; results in [&quot;render&quot;][&quot;iterations]</span>
+<span class="sd">        :param fallback: The fallback value, returned if the parameter does not exist.</span>
+<span class="sd">        :return: The matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_matrix</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NotFoundError"><a class="viewcode-back" href="../../../src.utility.Config.html#src.utility.Config.NotFoundError">[docs]</a><span class="k">class</span> <span class="nc">NotFoundError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

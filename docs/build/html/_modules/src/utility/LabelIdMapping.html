@@ -1,0 +1,133 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.utility.LabelIdMapping &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.utility.LabelIdMapping</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">csv</span>
+
+<div class="viewcode-block" id="LabelIdMapping"><a class="viewcode-back" href="../../../src.utility.LabelIdMapping.html#src.utility.LabelIdMapping.LabelIdMapping">[docs]</a><span class="k">class</span> <span class="nc">LabelIdMapping</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot; Handles category id mapping for semantic segmentation maps. It&#39;s used as a static Singleton class &quot;&quot;&quot;</span>
+
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Attributes:</span>
+<span class="sd">	id_label_map: maps from an id to its name. E.g. id_label_map[0] = &quot;void&quot;.</span>
+<span class="sd">	label_id_map: maps a class/category name to its id. E.g. label_id_map[&quot;void&quot;] = 0.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">id_label_map</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">label_id_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">pass</span>
+
+<div class="viewcode-block" id="LabelIdMapping.read_csv_mapping"><a class="viewcode-back" href="../../../src.utility.LabelIdMapping.html#src.utility.LabelIdMapping.LabelIdMapping.read_csv_mapping">[docs]</a>	<span class="nd">@staticmethod</span>
+	<span class="k">def</span> <span class="nf">read_csv_mapping</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; Loads an idset mapping from a csv file, assuming the rows are sorted by their ids.</span>
+<span class="sd">		</span>
+<span class="sd">		:param path: Path to csv file</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+				<span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>
+				<span class="n">new_id_label_map</span> <span class="o">=</span> <span class="p">[]</span>
+				<span class="n">new_label_id_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+				<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+					<span class="n">new_id_label_map</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+					<span class="n">new_label_id_map</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">])</span>
+
+				<span class="k">return</span> <span class="n">new_id_label_map</span><span class="p">,</span> <span class="n">new_label_id_map</span></div>
+
+<div class="viewcode-block" id="LabelIdMapping.assign_mapping"><a class="viewcode-back" href="../../../src.utility.LabelIdMapping.html#src.utility.LabelIdMapping.LabelIdMapping.assign_mapping">[docs]</a>	<span class="nd">@staticmethod</span>
+	<span class="k">def</span> <span class="nf">assign_mapping</span><span class="p">(</span><span class="n">mapping</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; Assign a mapping based on a given id-set. This mapping could be a path to a csv file holding the</span>
+<span class="sd">		id-set, or a tuple contaning the attributes that should be assigned to this class</span>
+
+<span class="sd">		:param mapping: If string then it&#39;s assumed it&#39;s a csv file holding the mapping, otherwise a tuple </span>
+<span class="sd">		holding the values that should be assigned to the attributes id_label_map, label_id_map, respectively.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+			<span class="n">mapping</span> <span class="o">=</span> <span class="n">LabelIdMapping</span><span class="o">.</span><span class="n">read_csv_mapping</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+
+		<span class="n">LabelIdMapping</span><span class="o">.</span><span class="n">id_label_map</span><span class="p">,</span> <span class="n">LabelIdMapping</span><span class="o">.</span><span class="n">label_id_map</span> <span class="o">=</span> <span class="n">mapping</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

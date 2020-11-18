@@ -1,0 +1,205 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.main.GlobalStorage module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.main.GlobalStorage">
+<span id="src-main-globalstorage-module"></span><h1>src.main.GlobalStorage module<a class="headerlink" href="#module-src.main.GlobalStorage" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.main.GlobalStorage.GlobalStorage">
+<em class="property">class </em><code class="descclassname">src.main.GlobalStorage.</code><code class="descname">GlobalStorage</code><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<dl class="docutils">
+<dt>The GlobalStorage has two functions:</dt>
+<dd><ol class="first last arabic simple">
+<li>It can store data over the boundaries of modules with the add(), set() and get() functions</li>
+<li>It keeps a global config, which can be used as a fallback strategy in the case a config value is used
+in many modules, for example the “output_dir”.</li>
+</ol>
+</dd>
+<dt>To 1. you can save your own keys in the GlobalStorage to access them in a later module.</dt>
+<dd>For example you have a personal renderer or loader, which has attributes, which are independent of the scene and
+the objects so custom properties for those are not the way to go. In these instances you can use these functions.</dd>
+</dl>
+<p>Here is a list of all used global_storage_keys to avoid that your key is clashing with existing keys:</p>
+<p>Please add all new keys you create to this list.</p>
+<p>To 2. the global config is inited during the main.Initializer module, this means before that it is not possible to
+access keys from the global config, but it is possible to add keys, which can then be later accessed for that check:
+add_to_config_before_init(). It is usually not necessary that you will access the global config yourself as each
+Config checks automatically if the key is stored in the global config, if it was not defined in the current module.
+The checking order:
+Local module then the global config if both fail the default value is used, if there is none an Exception is thrown.</p>
+<dl class="attribute">
+<dt id="src.main.GlobalStorage.GlobalStorage._add_to_global_config_at_init">
+<code class="descname">_add_to_global_config_at_init</code><em class="property"> = {}</em><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage._add_to_global_config_at_init" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="src.main.GlobalStorage.GlobalStorage._global_config">
+<code class="descname">_global_config</code><em class="property"> = None</em><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage._global_config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="src.main.GlobalStorage.GlobalStorage._storage_dict">
+<code class="descname">_storage_dict</code><em class="property"> = {}</em><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage._storage_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.add">
+<em class="property">static </em><code class="descname">add</code><span class="sig-paren">(</span><em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a key to the GlobalStorage this is independent of the global config, this can be used to store values
+over Module boundaries. Adding only works if there is not already a key like this in the GlobalStorage.</p>
+<p>For example the distance renderer sets the value “distance_end” during the rendering process, a module which is
+executed afterwards can then with get() access this value.</p>
+<p>These values can be added before the global config was inited as they do not depend on each other.
+:param key which is added to the GlobalStorage
+:param value which can be accessed by this key over the get() fct.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.add_to_config_before_init">
+<em class="property">static </em><code class="descname">add_to_config_before_init</code><span class="sig-paren">(</span><em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.add_to_config_before_init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.add_to_config_before_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds values to the global config before the GlobalStorage was inited, these value can only be accessed
+after the GlobalStorage was inited.
+:param key the key which is used in the global config to identify the value
+:param value the value which can be identified over the key</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.get">
+<em class="property">static </em><code class="descname">get</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a value from the GlobalStorage, please check add() and set() for more information
+:param key for which a value is searched
+:return value for the key</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.get_global_config">
+<em class="property">static </em><code class="descname">get_global_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.get_global_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.get_global_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the global config, this function should be used with care!</p>
+<p>There are only a few cases where this function should be called, please read the description at the top and
+make sure you have to call this function.</p>
+<p>:return the global config as a utility.Config object</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.has_param">
+<em class="property">static </em><code class="descname">has_param</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.has_param"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.has_param" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if this key is in the global config not in the GlobalStorage!
+:param key which should be checked
+:return True if the key is in the global config</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.init_global">
+<em class="property">static </em><code class="descname">init_global</code><span class="sig-paren">(</span><em>global_config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.init_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.init_global" title="Permalink to this definition">¶</a></dt>
+<dd><p>Inits the global config with the given config, global_config should be of type src.utility.Config</p>
+<p>Adds a key value pairs from add_to_global_config_at_init</p>
+<p>:param global_config the config to use</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.is_in_storage">
+<em class="property">static </em><code class="descname">is_in_storage</code><span class="sig-paren">(</span><em>key</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.is_in_storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.is_in_storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if a key is in the GlobalStorage
+:param key for which a value is searched
+:return True if the key is in the storage</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.main.GlobalStorage.GlobalStorage.set">
+<em class="property">static </em><code class="descname">set</code><span class="sig-paren">(</span><em>key</em>, <em>value</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/main/GlobalStorage.html#GlobalStorage.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.main.GlobalStorage.GlobalStorage.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a key in the GlobalStorage this is independent of the global config, this can be used to store values
+over Module boundaries. Setting always works and overwrites existing keys</p>
+<p>For example the distance renderer sets the value “renderer_distance_end” during the rendering process, a module
+which is executed afterwards can then with get() access this value.</p>
+<p>These values can be added before the global config was inited as they do not depend on each other.
+:param key which is added to the GlobalStorage
+:param value which can be accessed by this key over the get() fct.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.main.GlobalStorage.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,442 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.utility.Utility module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.utility.Utility">
+<span id="src-utility-utility-module"></span><h1>src.utility.Utility module<a class="headerlink" href="#module-src.utility.Utility" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.utility.Utility.Utility">
+<em class="property">class </em><code class="descclassname">src.utility.Utility.</code><code class="descname">Utility</code><a class="reference internal" href="_modules/src/utility/Utility.html#Utility"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<dl class="class">
+<dt id="src.utility.Utility.Utility.BlockStopWatch">
+<em class="property">class </em><code class="descname">BlockStopWatch</code><span class="sig-paren">(</span><em>block_name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.BlockStopWatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.BlockStopWatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Calls a print statement to mark the start and end of this block and also measures execution time.</p>
+<p>Usage: with BlockStopWatch(‘text’):</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="src.utility.Utility.Utility.UndoAfterExecution">
+<em class="property">class </em><code class="descname">UndoAfterExecution</code><span class="sig-paren">(</span><em>check_point_name=None</em>, <em>perform_undo_op=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.UndoAfterExecution"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.UndoAfterExecution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Reverts all changes done to the blender project inside this block.</p>
+<p>Usage: with UndoAfterExecution():</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.build_provider">
+<em class="property">static </em><code class="descname">build_provider</code><span class="sig-paren">(</span><em>name</em>, <em>parameters</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.build_provider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.build_provider" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds up providers like sampler or getter.</p>
+<p>It first builds the config and then constructs the required provider.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> – The name of the provider class.</li>
+<li><strong>parameters</strong> – A dict containing the parameters that should be used.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The constructed provider.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.build_provider_based_on_config">
+<em class="property">static </em><code class="descname">build_provider_based_on_config</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.build_provider_based_on_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.build_provider_based_on_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Builds up the provider using the parameters described in the given config.</p>
+<p>The given config should follow the following scheme:</p>
+<dl class="docutils">
+<dt>{</dt>
+<dd><p class="first">“provider”: “&lt;name of provider class&gt;”
+“parameters”: {</p>
+<blockquote>
+<div>&lt;provider parameters&gt;</div></blockquote>
+<p class="last">}</p>
+</dd>
+</dl>
+<p>}</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>config</strong> – A Configuration object or a dict containing the configuration data.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The constructed provider.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.generate_equidistant_values">
+<em class="property">static </em><code class="descname">generate_equidistant_values</code><span class="sig-paren">(</span><em>num</em>, <em>space_size_per_dimension</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.generate_equidistant_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.generate_equidistant_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function generates N equidistant values in a 3-dim space and returns num of them.</p>
+<p>Every dimension of the space is limited by [0, K], where K is the given space_size_per_dimension.
+Basically it splits a cube of shape K x K x K in to N smaller blocks. Where, N = cube_length^3
+and cube_length is the smallest integer for which N &gt;= num.</p>
+<p>If K is not a multiple of N, then the sum of all blocks might
+not fill up the whole K ** 3 cube.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>num</strong> – The total number of values required.</li>
+<li><strong>space_size_per_dimension</strong> – The side length of cube.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.get_idx">
+<em class="property">static </em><code class="descname">get_idx</code><span class="sig-paren">(</span><em>array</em>, <em>item</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.get_idx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.get_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns index of an element if it exists in the list
+:param array: a list with values for which == operator works.
+:param item: item to find the index of
+:return: index of item, -1 otherwise</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.get_node_connected_to_the_output_and_unlink_it">
+<em class="property">static </em><code class="descname">get_node_connected_to_the_output_and_unlink_it</code><span class="sig-paren">(</span><em>material</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.get_node_connected_to_the_output_and_unlink_it"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.get_node_connected_to_the_output_and_unlink_it" title="Permalink to this definition">¶</a></dt>
+<dd><p>Searches for the OutputMaterial in the given material and finds the connected node to it,
+removes the connection between this node and the output and returns this node and the material_output
+:param material_slot: material slot (</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.get_nodes_with_type">
+<em class="property">static </em><code class="descname">get_nodes_with_type</code><span class="sig-paren">(</span><em>nodes</em>, <em>node_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.get_nodes_with_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.get_nodes_with_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns all nodes which are of the given node_type
+:param nodes: list of nodes of the current material
+:param node_type: node types
+:return: list of nodes, which belong to the type</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.get_temporary_directory">
+<em class="property">static </em><code class="descname">get_temporary_directory</code><span class="sig-paren">(</span><em>config_object</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.get_temporary_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.get_temporary_directory" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">default temporary directory, shared memory if it exists</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.get_the_one_node_with_type">
+<em class="property">static </em><code class="descname">get_the_one_node_with_type</code><span class="sig-paren">(</span><em>nodes</em>, <em>node_type</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.get_the_one_node_with_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.get_the_one_node_with_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the one nodes which is of the given node_type</p>
+<p>This function will only work if there is only one of the nodes of this type.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nodes</strong> – list of nodes of the current material</li>
+<li><strong>node_type</strong> – node types</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">node of the node type</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.hex_to_rgba">
+<em class="property">static </em><code class="descname">hex_to_rgba</code><span class="sig-paren">(</span><em>hex</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.hex_to_rgba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.hex_to_rgba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the given hex string to rgba color values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>hex</strong> – The hex string, describing rgb.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The rgba color, in form of a list. Values between 0 and 1.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.import_objects">
+<em class="property">static </em><code class="descname">import_objects</code><span class="sig-paren">(</span><em>filepath</em>, <em>cached_objects=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.import_objects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.import_objects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Import all objects for the given file and returns the loaded objects</p>
+<p>In .obj files a list of objects can be saved in.
+In .ply files only one object can saved so the list has always at most one element</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>filepath</strong> – the filepath to the location where the data is stored</li>
+<li><strong>cached_objects</strong> – a dict of filepath to objects, which have been loaded before, to avoid reloading (the dict is updated in this function)</li>
+<li><strong>kwargs</strong> – all other params are handed directly to the bpy loading fct. check the corresponding documentation</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">a list of all newly loaded objects, in the failure case an empty list is returned</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.initialize_modules">
+<em class="property">static </em><code class="descname">initialize_modules</code><span class="sig-paren">(</span><em>module_configs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.initialize_modules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.initialize_modules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the modules described in the given configuration.</p>
+<p>Example for module_configs:
+[{</p>
+<blockquote>
+<div>“module”: “base.ModuleA”,
+“config”: {…}</div></blockquote>
+<p>}, …]</p>
+<p>Here the name contains the path to the module class, starting from inside the src directory.</p>
+<p>Be aware that all attributes stored in the GlobalStorage are also accessible here, even though
+they are not copied into the new config.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>module_configs</strong> – A list of dicts, each one describing one module.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.insert_node_instead_existing_link">
+<em class="property">static </em><code class="descname">insert_node_instead_existing_link</code><span class="sig-paren">(</span><em>links</em>, <em>source_socket</em>, <em>new_node_dest_socket</em>, <em>new_node_src_socket</em>, <em>dest_socket</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.insert_node_instead_existing_link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.insert_node_instead_existing_link" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replaces the node between source_socket and dest_socket with a new node.</p>
+<p>Before: source_socket -&gt; dest_socket
+After: source_socket -&gt; new_node_dest_socket</p>
+<blockquote>
+<div>new_node_src_socket -&gt; dest_socket</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>links</strong> – The collection of all links.</li>
+<li><strong>source_socket</strong> – The source socket.</li>
+<li><strong>new_node_dest_socket</strong> – The new destination for the link starting from source_socket.</li>
+<li><strong>new_node_src_socket</strong> – The new source for the link towards dest_socket.</li>
+<li><strong>dest_socket</strong> – The destination socket</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.map_back_from_equally_spaced_equidistant_values">
+<em class="property">static </em><code class="descname">map_back_from_equally_spaced_equidistant_values</code><span class="sig-paren">(</span><em>values</em>, <em>num_splits_per_dimension</em>, <em>space_size_per_dimension</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.map_back_from_equally_spaced_equidistant_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.map_back_from_equally_spaced_equidistant_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maps the given values back to their original indices.</p>
+<p>This function calculates for each given value the corresponding index in the list of values created by the generate_equidistant_values() method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>values</strong> – An array of shape [M, N, 3];</li>
+<li><strong>num_splits_per_dimension</strong> – The number of splits per dimension that were made when building up the equidistant values.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A 2-dim array of indices corresponding to the given values.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.merge_dicts">
+<em class="property">static </em><code class="descname">merge_dicts</code><span class="sig-paren">(</span><em>source</em>, <em>destination</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.merge_dicts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.merge_dicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively copies all key value pairs from src to dest (Overwrites existing)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>source</strong> – The source dict.</li>
+<li><strong>destination</strong> – The destination dict</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The modified destination dict.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.resolve_path">
+<em class="property">static </em><code class="descname">resolve_path</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.resolve_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.resolve_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an absolute path. If given path is relative, current working directory is put in front.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> – The path to resolve.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The absolute path.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.rgb_to_hex">
+<em class="property">static </em><code class="descname">rgb_to_hex</code><span class="sig-paren">(</span><em>rgb</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.rgb_to_hex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.rgb_to_hex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts the given rgb to hex values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>rgb</strong> – tuple of three with rgb integers.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Hex string.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.Utility.Utility.transform_point_to_blender_coord_frame">
+<em class="property">static </em><code class="descname">transform_point_to_blender_coord_frame</code><span class="sig-paren">(</span><em>point</em>, <em>frame_of_point</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/Utility.html#Utility.transform_point_to_blender_coord_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.Utility.Utility.transform_point_to_blender_coord_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transforms the given point into the blender coordinate frame.</p>
+<p>Example: [1, 2, 3] and [“X”, “-Z”, “Y”] =&gt; [1, -3, 2]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>point</strong> – The point to convert in form of a list or mathutils.Vector.</li>
+<li><strong>frame_of_point</strong> – An array containing three elements, describing the axes of the coordinate frame the point is in. (Allowed values: “X”, “Y”, “Z”, “-X”, “-Y”, “-Z”)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">The converted point also in form of a list or mathutils.Vector.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="src.utility.Utility.Utility.used_temp_id">
+<code class="descname">used_temp_id</code><em class="property"> = None</em><a class="headerlink" href="#src.utility.Utility.Utility.used_temp_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="src.utility.Utility.Utility.working_dir">
+<code class="descname">working_dir</code><em class="property"> = ''</em><a class="headerlink" href="#src.utility.Utility.Utility.working_dir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.utility.Utility.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

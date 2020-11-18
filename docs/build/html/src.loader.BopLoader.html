@@ -1,0 +1,329 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.BopLoader module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.loader.BopLoader">
+<span id="src-loader-boploader-module"></span><h1>src.loader.BopLoader module<a class="headerlink" href="#module-src.loader.BopLoader" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.loader.BopLoader.BopLoader">
+<em class="property">class </em><code class="descclassname">src.loader.BopLoader.</code><code class="descname">BopLoader</code><span class="sig-paren">(</span><em>config</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="src.loader.LoaderInterface.html#src.loader.LoaderInterface.LoaderInterface" title="src.loader.LoaderInterface.LoaderInterface"><code class="xref py py-class docutils literal"><span class="pre">src.loader.LoaderInterface.LoaderInterface</span></code></a></p>
+<p>Loads the 3D models of any BOP dataset and allows replicating BOP scenes</p>
+<ul class="simple">
+<li>Interfaces with the bop_toolkit, allows loading of train, val and test splits</li>
+<li>Relative camera poses are loaded/computed with respect to a reference model</li>
+<li>Sets real camera intrinsics</li>
+</ul>
+<p><strong>Configuration</strong>:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>cam_type</td>
+<td>Camera type. Type: string. Optional. Default value: ‘’.</td>
+</tr>
+<tr class="row-odd"><td>sys_paths</td>
+<td>System paths to append. Type: list.</td>
+</tr>
+<tr class="row-even"><td>bop_dataset_path</td>
+<td>Full path to a specific bop dataset e.g. /home/user/bop/tless. Type: string.</td>
+</tr>
+<tr class="row-odd"><td>mm2m</td>
+<td>Specify whether to convert poses and models to meters. Type: bool. Optional. Default: False.</td>
+</tr>
+<tr class="row-even"><td>split</td>
+<td>Optionally, test or val split depending on BOP dataset. Type: string. Optional. Default: test.</td>
+</tr>
+<tr class="row-odd"><td>scene_id</td>
+<td>Optionally, specify BOP dataset scene to synthetically replicate. Type: int. Default: -1 (no scene</td>
+</tr>
+<tr class="row-even"><td>is replicated, only BOP Objects are loaded).</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>sample_objects</td>
+<td>Toggles object sampling from the specified dataset. Type: boolean. Default: False.</td>
+</tr>
+<tr class="row-even"><td>num_of_objs_to_sample</td>
+<td>Amount of objects to sample from the specified dataset. Type: int. If this amount is</td>
+</tr>
+<tr class="row-odd"><td>bigger than the dataset actually contains, then all objects will be loaded. Type: int.</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td>obj_instances_limit</td>
+<td>Limits the amount of object copies when sampling. Type: int. Default: -1 (no limit).</td>
+</tr>
+<tr class="row-odd"><td>obj_ids</td>
+<td>List of object ids to load. Type: list. Default: [] (all objects from the given BOP dataset if</td>
+</tr>
+<tr class="row-even"><td>scene_id is not specified).</td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td>model_type</td>
+<td>Optionally, specify type of BOP model. Type: string. Default: “. Available: [reconst, cad or eval].</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._compute_camera_to_world_trafo">
+<code class="descname">_compute_camera_to_world_trafo</code><span class="sig-paren">(</span><em>cam_H_m2w_ref</em>, <em>cam_H_m2c_ref</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._compute_camera_to_world_trafo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._compute_camera_to_world_trafo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns camera to world transformation in blender coords.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>cam_H_m2c_ref</strong> – (4x4) Homog trafo from object to camera coords. Type: ndarray.</li>
+<li><strong>cam_H_m2w_ref</strong> – (4x4) Homog trafo from object to world coords. Type: ndarray.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">cam_H_c2w: (4x4) Homog trafo from camera to world coords. Type: mathutils.Matrix.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._get_loaded_obj">
+<code class="descname">_get_loaded_obj</code><span class="sig-paren">(</span><em>model_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._get_loaded_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._get_loaded_obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the object if it has already been loaded.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>model_path</strong> – Model path of the new object. Type: string.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Object if found, else return None. Type: bpy.types.Object/None.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._get_ref_cam_extrinsics_intrinsics">
+<code class="descname">_get_ref_cam_extrinsics_intrinsics</code><span class="sig-paren">(</span><em>sc_camera</em>, <em>cam_id</em>, <em>insts</em>, <em>scale</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._get_ref_cam_extrinsics_intrinsics"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._get_ref_cam_extrinsics_intrinsics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get camK and transformation from object instance 0 to camera cam_id as reference.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sc_camera</strong> – BOP scene_camera file. Type: dict.</li>
+<li><strong>cam_id</strong> – BOP camera id. Type: int.</li>
+<li><strong>insts</strong> – Instance from BOP scene_gt file. Type: dict.</li>
+<li><strong>scale</strong> – Factor to transform get pose in mm or meters. Type: int.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:return camK : loaded camera matrix. Type: ndarray.
+:return cam_H_m2c_ref: loaded object to camera transformation. Type: ndarray.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._insert_key_frames">
+<code class="descname">_insert_key_frames</code><span class="sig-paren">(</span><em>obj</em>, <em>frame_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._insert_key_frames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._insert_key_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert key frames for given object pose.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>obj</strong> – Loaded object. Type: bpy.types.Object.</li>
+<li><strong>frame_id</strong> – The frame number where key frames should be inserted. Type: int.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._link_col_node">
+<code class="descname">_link_col_node</code><span class="sig-paren">(</span><em>mat</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._link_col_node"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._link_col_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Links a color attribute node to a Principled BSDF node.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mat</strong> – The material to use. Type: bpy.types.Material.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._load_materials">
+<code class="descname">_load_materials</code><span class="sig-paren">(</span><em>cur_obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._load_materials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._load_materials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads / defines materials, e.g. vertex colors.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>cur_obj</strong> – The object to use. Type: bpy.types.Object.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Material with vertex color. Type: bpy.types.Material.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._load_mesh">
+<code class="descname">_load_mesh</code><span class="sig-paren">(</span><em>obj_id</em>, <em>model_p</em>, <em>scale=1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._load_mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._load_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads BOP mesh and sets category_id.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>obj_id</strong> – The obj_id of the BOP Object. Type: int.</li>
+<li><strong>model_p</strong> – model parameters defined in dataset_params.py in bop_toolkit. Type: dict.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Current object. Type: bpy.types.Object.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader._load_texture">
+<code class="descname">_load_texture</code><span class="sig-paren">(</span><em>cur_obj</em>, <em>texture_file_path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader._load_texture"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader._load_texture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load the textures for the ycbv objects, only those contain texture information</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cur_obj</strong> – The object to use. Type: bpy.types.Object.</li>
+<li><strong>texture_file_path</strong> – path to the texture file (most likely “.png”)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load BOP data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.loader.BopLoader.BopLoader.set_object_pose">
+<code class="descname">set_object_pose</code><span class="sig-paren">(</span><em>cur_obj</em>, <em>inst</em>, <em>scale</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/loader/BopLoader.html#BopLoader.set_object_pose"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.loader.BopLoader.BopLoader.set_object_pose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set object pose for current obj</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>cur_obj</strong> – Current object. Type: bpy.types.Object.</li>
+<li><strong>inst</strong> – instance from BOP scene_gt file. Type: dict.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:param scale : factor to transform set pose in mm or meters. Type: dict.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.loader.BopLoader.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

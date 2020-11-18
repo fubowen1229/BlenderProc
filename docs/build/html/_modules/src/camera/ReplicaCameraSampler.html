@@ -1,0 +1,199 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.camera.ReplicaCameraSampler &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.camera.ReplicaCameraSampler</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">ast</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.camera.CameraSampler</span> <span class="kn">import</span> <span class="n">CameraSampler</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+
+
+<div class="viewcode-block" id="ReplicaCameraSampler"><a class="viewcode-back" href="../../../src.camera.ReplicaCameraSampler.html#src.camera.ReplicaCameraSampler.ReplicaCameraSampler">[docs]</a><span class="k">class</span> <span class="nc">ReplicaCameraSampler</span><span class="p">(</span><span class="n">CameraSampler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Samples valid camera poses inside replica rooms.</span>
+
+<span class="sd">        Works as the standard camera sampler, except the following differences:</span>
+<span class="sd">        - Always sets the x and y coordinate of the camera location to a value uniformly sampled inside of a room&#39;s</span>
+<span class="sd">          bounding box</span>
+<span class="sd">        - The configured z coordinate of the configured camera location is used as relative to the floor</span>
+<span class="sd">        - All sampled camera locations need to lie straight above the room&#39;s floor to be valid</span>
+<span class="sd">        - Using the scene coverage/interestingness score in the ReplicaCameraSampler does not make much sense, as the</span>
+<span class="sd">          3D mesh is not split into individual objects.</span>
+
+<span class="sd">        See parent class CameraSampler for more details.</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">        :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">        &quot;is_replica_object&quot;, &quot;Whether it&#39;s a Replica object. Type: bool. Default: False.&quot;</span>
+<span class="sd">        &quot;height_list_path&quot;, &quot;Path to height list. Type: string.&quot;</span>
+<span class="sd">        &quot;data_set_name&quot;, &quot;Dataset name in case is_replica_object is set to false. Type: string.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">CameraSampler</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ReplicaCameraSampler.run"><a class="viewcode-back" href="../../../src.camera.ReplicaCameraSampler.html#src.camera.ReplicaCameraSampler.ReplicaCameraSampler.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Samples multiple cameras per suncg room.</span>
+
+<span class="sd">        Procedure per room:</span>
+<span class="sd">         - sample position (x,y) inside bounding box of the whole scene, the z component is fixed by the camera_height</span>
+<span class="sd">         - send ray from position straight down and make sure it hits the floor object of the scene</span>
+<span class="sd">         - send rays through the field of view to approximate a depth map and to make sure no obstacle is too close to the camera</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Determine bounding box of the scene</span>
+        <span class="k">if</span> <span class="s1">&#39;mesh&#39;</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="p">:</span>
+            <span class="n">bounding_box</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="p">[</span><span class="s1">&#39;mesh&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">bound_box</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="n">bounding_box</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="n">bounding_box</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Mesh object is not defined!&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Find floor object</span>
+        <span class="k">if</span> <span class="s1">&#39;floor&#39;</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">floor_object</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">objects</span><span class="p">[</span><span class="s1">&#39;floor&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No floor object is defined!&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Load the height levels of this scene</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s1">&#39;is_replica_object&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s1">&#39;height_list_path&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">folder_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;resources&#39;</span><span class="p">,</span> <span class="s1">&#39;replica_dataset&#39;</span><span class="p">,</span> <span class="s1">&#39;height_levels&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s1">&#39;data_set_name&#39;</span><span class="p">))</span>
+            <span class="n">file_path</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">resolve_path</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">folder_path</span><span class="p">,</span> <span class="s1">&#39;height_list_values.txt&#39;</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">floor_height_values</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">ast</span><span class="o">.</span><span class="n">literal_eval</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">())]</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ReplicaCameraSampler.sample_and_validate_cam_pose"><a class="viewcode-back" href="../../../src.camera.ReplicaCameraSampler.html#src.camera.ReplicaCameraSampler.ReplicaCameraSampler.sample_and_validate_cam_pose">[docs]</a>    <span class="k">def</span> <span class="nf">sample_and_validate_cam_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Samples a new camera pose, sets the parameters of the given camera object accordingly and validates it.</span>
+
+<span class="sd">        :param cam: The camera which contains only camera specific attributes.</span>
+<span class="sd">        :param cam_ob: The object linked to the camera which determines general properties like location/orientation</span>
+<span class="sd">        :param config: The config object describing how to sample</span>
+<span class="sd">        :return: True, if the sampled pose was valid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Sample/set intrinsics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_cam_intrinsics</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Sample camera extrinsics (we do not set them yet for performance reasons)</span>
+        <span class="n">cam2world_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cam2world_matrix_from_cam_extrinsics</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="c1"># Make sure the sampled location is inside the room =&gt; overwrite x and y and add offset to z</span>
+        <span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">translation</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="s2">&quot;min&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">translation</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="s2">&quot;min&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounding_box</span><span class="p">[</span><span class="s2">&quot;max&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">translation</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">floor_height_values</span><span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">floor_height_values</span><span class="p">))]</span>
+
+        <span class="c1"># Check if sampled pose is valid</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_pose_valid</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">cam2world_matrix</span><span class="p">):</span>
+            <span class="c1"># Set camera extrinsics as the pose is valid</span>
+            <span class="n">cam_ob</span><span class="o">.</span><span class="n">matrix_world</span> <span class="o">=</span> <span class="n">cam2world_matrix</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="ReplicaCameraSampler._is_pose_valid"><a class="viewcode-back" href="../../../src.camera.ReplicaCameraSampler.html#src.camera.ReplicaCameraSampler.ReplicaCameraSampler._is_pose_valid">[docs]</a>    <span class="k">def</span> <span class="nf">_is_pose_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">cam2world_matrix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Determines if the given pose is valid.</span>
+
+<span class="sd">        - Checks if the pose is above the floor</span>
+<span class="sd">        - Checks if the distance to objects is in the configured range</span>
+<span class="sd">        - Checks if the scene coverage score is above the configured threshold</span>
+
+<span class="sd">        :param cam: The camera which contains only camera specific attributes.</span>
+<span class="sd">        :param cam_ob: The object linked to the camera which determines general properties like location/orientation</span>
+<span class="sd">        :param cam2world_matrix: The sampled camera extrinsics in form of a camera to world frame transformation matrix.</span>
+<span class="sd">        :return: True, if the pose is valid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_position_is_above_object</span><span class="p">(</span><span class="n">cam2world_matrix</span><span class="o">.</span><span class="n">to_translation</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">floor_object</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_is_pose_valid</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">cam2world_matrix</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

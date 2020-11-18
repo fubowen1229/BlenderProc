@@ -1,0 +1,257 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.utility.CocoUtility module &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-src.utility.CocoUtility">
+<span id="src-utility-cocoutility-module"></span><h1>src.utility.CocoUtility module<a class="headerlink" href="#module-src.utility.CocoUtility" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="src.utility.CocoUtility.CocoUtility">
+<em class="property">class </em><code class="descclassname">src.utility.CocoUtility.</code><code class="descname">CocoUtility</code><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.bbox_from_binary_mask">
+<em class="property">static </em><code class="descname">bbox_from_binary_mask</code><span class="sig-paren">(</span><em>binary_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.bbox_from_binary_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.bbox_from_binary_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the smallest bounding box containing all pixels marked “1” in the given image mask.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>binary_mask</strong> – A binary image mask with the shape [H, W].</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The bounding box represented as [x, y, width, height]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.binary_mask_to_polygon">
+<em class="property">static </em><code class="descname">binary_mask_to_polygon</code><span class="sig-paren">(</span><em>binary_mask</em>, <em>tolerance=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.binary_mask_to_polygon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.binary_mask_to_polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a binary mask to COCO polygon representation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>binary_mask</strong> – a 2D binary numpy array where ‘1’s represent the object</li>
+<li><strong>tolerance</strong> – Maximum distance from original points of polygon to approximated polygonal chain. If
+tolerance is 0, the original coordinate array is returned.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.binary_mask_to_rle">
+<em class="property">static </em><code class="descname">binary_mask_to_rle</code><span class="sig-paren">(</span><em>binary_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.binary_mask_to_rle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.binary_mask_to_rle" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.calc_binary_mask_area">
+<em class="property">static </em><code class="descname">calc_binary_mask_area</code><span class="sig-paren">(</span><em>binary_mask</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.calc_binary_mask_area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.calc_binary_mask_area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the area of the given binary mask which is defined as the number of 1s in the mask.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>binary_mask</strong> – A binary image mask with the shape [H, W].</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The computed area</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.close_contour">
+<em class="property">static </em><code class="descname">close_contour</code><span class="sig-paren">(</span><em>contour</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.close_contour"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.close_contour" title="Permalink to this definition">¶</a></dt>
+<dd><p>Makes sure the given contour is closed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>contour</strong> – The contour to close.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The closed contour.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.create_annotation_info">
+<em class="property">static </em><code class="descname">create_annotation_info</code><span class="sig-paren">(</span><em>annotation_id</em>, <em>image_id</em>, <em>category_id</em>, <em>binary_mask</em>, <em>mask_encoding_format</em>, <em>tolerance=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.create_annotation_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.create_annotation_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates info section of coco annotation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>annotation_id</strong> – integer to uniquly identify the annotation</li>
+<li><strong>image_id</strong> – integer to uniquly identify image</li>
+<li><strong>category_id</strong> – Id of the category</li>
+<li><strong>binary_mask</strong> – A binary image mask of the object with the shape [H, W].</li>
+<li><strong>mask_encoding_format</strong> – Encoding format of the mask. Type: string.</li>
+<li><strong>tolerance</strong> – The tolerance for fitting polygons to the objects mask.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.create_image_info">
+<em class="property">static </em><code class="descname">create_image_info</code><span class="sig-paren">(</span><em>image_id</em>, <em>file_name</em>, <em>image_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.create_image_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.create_image_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates image info section of coco annotation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>image_id</strong> – integer to uniquly identify image</li>
+<li><strong>file_name</strong> – filename for image</li>
+<li><strong>image_size</strong> – The size of the image, given as [W, H]</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.generate_coco_annotations">
+<em class="property">static </em><code class="descname">generate_coco_annotations</code><span class="sig-paren">(</span><em>segmentation_map_paths</em>, <em>image_paths</em>, <em>inst_attribute_maps</em>, <em>supercategory</em>, <em>mask_encoding_format</em>, <em>existing_coco_annotations=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.generate_coco_annotations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.generate_coco_annotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates coco annotations for images</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>segmentation_map_paths</strong> – A list of paths which points to the rendered segmentation maps.</li>
+<li><strong>image_paths</strong> – A list of paths which points to the rendered segmentation maps.</li>
+<li><strong>inst_attribute_maps</strong> – mapping with idx, class and optionally supercategory/bop_dataset_name</li>
+<li><strong>supercategory</strong> – name of the dataset/supercategory to filter for, e.g. a specific BOP dataset</li>
+<li><strong>mask_encoding_format</strong> – Encoding format of the binary mask. Type: string.</li>
+<li><strong>existing_coco_annotations</strong> – If given, the new coco annotations will be appended to the given coco annotations dict.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">dict containing coco annotations</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="src.utility.CocoUtility.CocoUtility.merge_coco_annotations">
+<em class="property">static </em><code class="descname">merge_coco_annotations</code><span class="sig-paren">(</span><em>existing_coco_annotations</em>, <em>new_coco_annotations</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/utility/CocoUtility.html#CocoUtility.merge_coco_annotations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.utility.CocoUtility.CocoUtility.merge_coco_annotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merges the two given coco annotation dicts into one.</p>
+<p>Currently this requires both coco annotations to have the exact same categories/objects.
+The “images” and “annotations” sections are concatenated and respective ids are adjusted.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>existing_coco_annotations</strong> – A dict describing the first coco annotations.</li>
+<li><strong>new_coco_annotations</strong> – A dict describing the second coco annotations.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A dict containing the merged coco annotations.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/src.utility.CocoUtility.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

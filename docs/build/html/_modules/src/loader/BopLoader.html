@@ -1,0 +1,473 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.loader.BopLoader &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.loader.BopLoader</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">choice</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">mathutils</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">Vector</span>
+
+<span class="kn">from</span> <span class="nn">src.camera.CameraInterface</span> <span class="kn">import</span> <span class="n">CameraInterface</span>
+<span class="kn">from</span> <span class="nn">src.loader.LoaderInterface</span> <span class="kn">import</span> <span class="n">LoaderInterface</span>
+<span class="kn">from</span> <span class="nn">src.utility.Utility</span> <span class="kn">import</span> <span class="n">Utility</span>
+<span class="kn">from</span> <span class="nn">src.utility.Config</span> <span class="kn">import</span> <span class="n">Config</span>
+
+
+<div class="viewcode-block" id="BopLoader"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader">[docs]</a><span class="k">class</span> <span class="nc">BopLoader</span><span class="p">(</span><span class="n">LoaderInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Loads the 3D models of any BOP dataset and allows replicating BOP scenes</span>
+<span class="sd">    </span>
+<span class="sd">    - Interfaces with the bop_toolkit, allows loading of train, val and test splits</span>
+<span class="sd">    - Relative camera poses are loaded/computed with respect to a reference model</span>
+<span class="sd">    - Sets real camera intrinsics</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">       :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+
+<span class="sd">       &quot;cam_type&quot;, &quot;Camera type. Type: string. Optional. Default value: &#39;&#39;.&quot;</span>
+<span class="sd">       &quot;sys_paths&quot;, &quot;System paths to append. Type: list.&quot;</span>
+<span class="sd">       &quot;bop_dataset_path&quot;, &quot;Full path to a specific bop dataset e.g. /home/user/bop/tless. Type: string.&quot;</span>
+<span class="sd">       &quot;mm2m&quot;, &quot;Specify whether to convert poses and models to meters. Type: bool. Optional. Default: False.&quot;</span>
+<span class="sd">       &quot;split&quot;, &quot;Optionally, test or val split depending on BOP dataset. Type: string. Optional. Default: test.&quot;</span>
+<span class="sd">       &quot;scene_id&quot;, &quot;Optionally, specify BOP dataset scene to synthetically replicate. Type: int. Default: -1 (no scene &quot;</span>
+<span class="sd">                   &quot;is replicated, only BOP Objects are loaded).&quot;</span>
+<span class="sd">       &quot;sample_objects&quot;, &quot;Toggles object sampling from the specified dataset. Type: boolean. Default: False.&quot;</span>
+<span class="sd">       &quot;num_of_objs_to_sample&quot;, &quot;Amount of objects to sample from the specified dataset. Type: int. If this amount is &quot;</span>
+<span class="sd">                                &quot;bigger than the dataset actually contains, then all objects will be loaded. Type: int.&quot;</span>
+<span class="sd">       &quot;obj_instances_limit&quot;, &quot;Limits the amount of object copies when sampling. Type: int. Default: -1 (no limit).&quot;</span>
+<span class="sd">       &quot;obj_ids&quot;, &quot;List of object ids to load. Type: list. Default: [] (all objects from the given BOP dataset if &quot;</span>
+<span class="sd">                  &quot;scene_id is not specified).&quot;</span>
+<span class="sd">       &quot;model_type&quot;, &quot;Optionally, specify type of BOP model. Type: string. Default: &quot;&quot;. Available: [reconst, cad or eval].&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">LoaderInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+        <span class="n">sys_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="s2">&quot;sys_paths&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">sys_path</span> <span class="ow">in</span> <span class="n">sys_paths</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;bop_toolkit&#39;</span> <span class="ow">in</span> <span class="n">sys_path</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sys_path</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sample_objects</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;sample_objects&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_objects</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">num_of_objs_to_sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_int</span><span class="p">(</span><span class="s2">&quot;num_of_objs_to_sample&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">obj_instances_limit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_int</span><span class="p">(</span><span class="s2">&quot;obj_instances_limit&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cam_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;cam_type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;bop_dataset_path&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scene_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_int</span><span class="p">(</span><span class="s2">&quot;scene_id&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="s2">&quot;obj_ids&quot;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_ids</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_objects</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allow_duplication</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">allow_duplication</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">split</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;split&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;model_type&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="mf">0.001</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;mm2m&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_has_external_texture</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;ycbv&quot;</span><span class="p">,</span> <span class="s2">&quot;ruapc&quot;</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BopLoader.run"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Load BOP data &quot;&quot;&quot;</span>
+
+        <span class="n">datasets_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_path</span><span class="p">)</span>
+        <span class="n">dataset</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_path</span><span class="p">)</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;bob: </span><span class="si">{}</span><span class="s2">, dataset_path: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_path</span><span class="p">,</span> <span class="n">datasets_path</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;dataset: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">bop_toolkit_lib</span> <span class="kn">import</span> <span class="n">dataset_params</span><span class="p">,</span> <span class="n">inout</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ERROR: Please download the bop_toolkit package and add it to sys_paths in config!&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;https://github.com/thodan/bop_toolkit&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">error</span>
+
+        <span class="n">model_p</span> <span class="o">=</span> <span class="n">dataset_params</span><span class="o">.</span><span class="n">get_model_params</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">model_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_type</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">cam_p</span> <span class="o">=</span> <span class="n">dataset_params</span><span class="o">.</span><span class="n">get_camera_params</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">cam_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cam_type</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cam_type</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">split_p</span> <span class="o">=</span> <span class="n">dataset_params</span><span class="o">.</span><span class="n">get_split_params</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Wrong path or </span><span class="si">{}</span><span class="s2"> split does not exist in </span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">,</span> <span class="n">dataset</span><span class="p">))</span>
+        
+        <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">world</span><span class="p">[</span><span class="s2">&quot;category_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">resolution_x</span> <span class="o">=</span> <span class="n">cam_p</span><span class="p">[</span><span class="s1">&#39;im_size&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">render</span><span class="o">.</span><span class="n">resolution_y</span> <span class="o">=</span> <span class="n">cam_p</span><span class="p">[</span><span class="s1">&#39;im_size&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># Collect camera and camera object</span>
+        <span class="n">cam_ob</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">camera</span>
+        <span class="n">cam</span> <span class="o">=</span> <span class="n">cam_ob</span><span class="o">.</span><span class="n">data</span>
+
+        <span class="n">cam</span><span class="p">[</span><span class="s1">&#39;loaded_intrinsics&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cam_p</span><span class="p">[</span><span class="s1">&#39;K&#39;</span><span class="p">]</span>
+        <span class="n">cam</span><span class="p">[</span><span class="s1">&#39;loaded_resolution&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_p</span><span class="p">[</span><span class="s1">&#39;im_size&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">split_p</span><span class="p">[</span><span class="s1">&#39;im_size&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># TLESS exception because images are cropped</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;tless&#39;</span><span class="p">]:</span>
+            <span class="n">cam</span><span class="p">[</span><span class="s1">&#39;loaded_intrinsics&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_p</span><span class="p">[</span><span class="s1">&#39;im_size&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span>
+            <span class="n">cam</span><span class="p">[</span><span class="s1">&#39;loaded_intrinsics&#39;</span><span class="p">][</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_p</span><span class="p">[</span><span class="s1">&#39;im_size&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span>   
+        
+        <span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">({})</span>
+        <span class="n">camera_module</span> <span class="o">=</span> <span class="n">CameraInterface</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">camera_module</span><span class="o">.</span><span class="n">_set_cam_intrinsics</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+        <span class="n">loaded_objects</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># only load all/selected objects here, use other modules for setting poses</span>
+        <span class="c1"># e.g. camera.CameraSampler / object.ObjectPoseSampler</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene_id</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">obj_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_ids</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_ids</span> <span class="k">else</span> <span class="n">model_p</span><span class="p">[</span><span class="s1">&#39;obj_ids&#39;</span><span class="p">]</span>
+            <span class="c1"># if sampling is enabled</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_objects</span><span class="p">:</span>
+                <span class="n">loaded_ids</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">loaded_amount</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_instances_limit</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj_ids</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_instances_limit</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_of_objs_to_sample</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&#39;s </span><span class="si">{}</span><span class="s2"> split contains </span><span class="si">{}</span><span class="s2"> objects, </span><span class="si">{}</span><span class="s2"> object where requested to sample with &quot;</span>
+                                       <span class="s2">&quot;an instances limit of </span><span class="si">{}</span><span class="s2">. Raise the limit amount or decrease the requested &quot;</span>
+                                       <span class="s2">&quot;amount of objects.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj_ids</span><span class="p">),</span>
+                                                                   <span class="bp">self</span><span class="o">.</span><span class="n">num_of_objs_to_sample</span><span class="p">,</span>
+                                                                   <span class="bp">self</span><span class="o">.</span><span class="n">obj_instances_limit</span><span class="p">))</span>
+                <span class="k">while</span> <span class="n">loaded_amount</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_of_objs_to_sample</span><span class="p">:</span>
+                    <span class="n">random_id</span> <span class="o">=</span> <span class="n">choice</span><span class="p">(</span><span class="n">obj_ids</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">random_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">loaded_ids</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                        <span class="n">loaded_ids</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">random_id</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+                    <span class="c1"># if there is no limit or if there is one, but it is not reached for this particular object</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_instances_limit</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">loaded_ids</span><span class="p">[</span><span class="n">random_id</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_instances_limit</span><span class="p">:</span>
+                        <span class="n">cur_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_mesh</span><span class="p">(</span><span class="n">random_id</span><span class="p">,</span> <span class="n">model_p</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+                        <span class="n">loaded_ids</span><span class="p">[</span><span class="n">random_id</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">loaded_amount</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">loaded_objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cur_obj</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ID </span><span class="si">{}</span><span class="s2"> was loaded </span><span class="si">{}</span><span class="s2"> times with limit of </span><span class="si">{}</span><span class="s2">. Total loaded amount </span><span class="si">{}</span><span class="s2"> while </span><span class="si">{}</span><span class="s2"> are &quot;</span>
+                              <span class="s2">&quot;being requested&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">random_id</span><span class="p">,</span> <span class="n">loaded_ids</span><span class="p">[</span><span class="n">random_id</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_instances_limit</span><span class="p">,</span>
+                                                       <span class="n">loaded_amount</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_of_objs_to_sample</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">obj_id</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
+                    <span class="n">cur_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_mesh</span><span class="p">(</span><span class="n">obj_id</span><span class="p">,</span> <span class="n">model_p</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+                    <span class="n">loaded_objects</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cur_obj</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_properties</span><span class="p">(</span><span class="n">loaded_objects</span><span class="p">)</span>
+
+        <span class="c1"># replicate scene: load scene objects, object poses, camera intrinsics and camera poses</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sc_gt</span> <span class="o">=</span> <span class="n">inout</span><span class="o">.</span><span class="n">load_scene_gt</span><span class="p">(</span><span class="n">split_p</span><span class="p">[</span><span class="s1">&#39;scene_gt_tpath&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s1">&#39;scene_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene_id</span><span class="p">}))</span>
+            <span class="n">sc_camera</span> <span class="o">=</span> <span class="n">inout</span><span class="o">.</span><span class="n">load_json</span><span class="p">(</span><span class="n">split_p</span><span class="p">[</span><span class="s1">&#39;scene_camera_tpath&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s1">&#39;scene_id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scene_id</span><span class="p">}))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">cam_id</span><span class="p">,</span> <span class="n">insts</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sc_gt</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">cam_K</span><span class="p">,</span> <span class="n">cam_H_m2c_ref</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_ref_cam_extrinsics_intrinsics</span><span class="p">(</span><span class="n">sc_camera</span><span class="p">,</span> <span class="n">cam_id</span><span class="p">,</span> <span class="n">insts</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># define world = first camera</span>
+                    <span class="n">cam_H_m2w_ref</span> <span class="o">=</span> <span class="n">cam_H_m2c_ref</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+                    <span class="n">cur_objs</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="c1"># load scene objects and set their poses</span>
+                    <span class="k">for</span> <span class="n">inst</span> <span class="ow">in</span> <span class="n">insts</span><span class="p">:</span>                           
+                        <span class="n">cur_objs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_load_mesh</span><span class="p">(</span><span class="n">inst</span><span class="p">[</span><span class="s1">&#39;obj_id&#39;</span><span class="p">],</span> <span class="n">model_p</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">))</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">set_object_pose</span><span class="p">(</span><span class="n">cur_objs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">inst</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>
+                        
+
+                <span class="n">cam_H_c2w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_camera_to_world_trafo</span><span class="p">(</span><span class="n">cam_H_m2w_ref</span><span class="p">,</span> <span class="n">cam_H_m2c_ref</span><span class="p">)</span>
+                <span class="c1">#set camera intrinsics and extrinsics </span>
+                <span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">({</span><span class="s2">&quot;cam2world_matrix&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cam_H_c2w</span><span class="o">.</span><span class="n">flatten</span><span class="p">()),</span> <span class="s2">&quot;cam_K&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">cam_K</span><span class="o">.</span><span class="n">flatten</span><span class="p">())})</span>
+                <span class="n">camera_module</span><span class="o">.</span><span class="n">_set_cam_intrinsics</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+                <span class="n">camera_module</span><span class="o">.</span><span class="n">_set_cam_extrinsics</span><span class="p">(</span><span class="n">cam_ob</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+                <span class="c1"># Store new cam pose as next frame</span>
+                <span class="n">frame_id</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span>
+                <span class="c1"># Copy object poses to next key frame (to be sure)</span>
+                <span class="k">for</span> <span class="n">cur_obj</span> <span class="ow">in</span> <span class="n">cur_objs</span><span class="p">:</span>                           
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_insert_key_frames</span><span class="p">(</span><span class="n">cur_obj</span><span class="p">,</span> <span class="n">frame_id</span><span class="p">)</span>
+                <span class="n">camera_module</span><span class="o">.</span><span class="n">_insert_key_frames</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span> <span class="n">cam_ob</span><span class="p">,</span> <span class="n">frame_id</span><span class="p">)</span>
+                <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span> <span class="o">=</span> <span class="n">frame_id</span> <span class="o">+</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="BopLoader._compute_camera_to_world_trafo"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._compute_camera_to_world_trafo">[docs]</a>    <span class="k">def</span> <span class="nf">_compute_camera_to_world_trafo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cam_H_m2w_ref</span><span class="p">,</span> <span class="n">cam_H_m2c_ref</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns camera to world transformation in blender coords.</span>
+
+<span class="sd">        :param cam_H_m2c_ref: (4x4) Homog trafo from object to camera coords. Type: ndarray.</span>
+<span class="sd">        :param cam_H_m2w_ref: (4x4) Homog trafo from object to world coords. Type: ndarray.</span>
+<span class="sd">        :return: cam_H_c2w: (4x4) Homog trafo from camera to world coords. Type: mathutils.Matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cam_H_c2w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">cam_H_m2w_ref</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cam_H_m2c_ref</span><span class="p">))</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cam: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cam_H_c2w</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------&#39;</span><span class="p">)</span>
+
+        <span class="c1"># transform from OpenCV to blender coords</span>
+<div class="viewcode-block" id="BopLoader.set_object_pose"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader.set_object_pose">[docs]</a>        <span class="n">cam_H_c2w</span> <span class="o">=</span> <span class="n">cam_H_c2w</span> <span class="o">@</span> <span class="n">Matrix</span><span class="o">.</span><span class="n">Rotation</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="mi">180</span><span class="p">),</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cam_H_c2w</span></div>
+
+    <span class="k">def</span> <span class="nf">set_object_pose</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur_obj</span><span class="p">,</span> <span class="n">inst</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set object pose for current obj</span>
+
+<span class="sd">        :param cur_obj: Current object. Type: bpy.types.Object.</span>
+<span class="sd">        :param inst: instance from BOP scene_gt file. Type: dict.</span>
+<span class="sd">        :param scale : factor to transform set pose in mm or meters. Type: dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cam_H_m2c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">cam_H_m2c</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">inst</span><span class="p">[</span><span class="s1">&#39;cam_R_m2c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">cam_H_m2c</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">inst</span><span class="p">[</span><span class="s1">&#39;cam_t_m2c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span>
+
+        <span class="c1"># world = camera @ i=0</span>
+        <span class="n">cam_H_m2w</span> <span class="o">=</span> <span class="n">cam_H_m2c</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cam_H_m2w</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-----------------------------&#39;</span><span class="p">)</span>
+
+        <span class="n">cur_obj</span><span class="o">.</span><span class="n">matrix_world</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">cam_H_m2w</span><span class="p">)</span>
+        <span class="n">cur_obj</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">((</span><span class="n">scale</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">scale</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="BopLoader._insert_key_frames"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._insert_key_frames">[docs]</a>    <span class="k">def</span> <span class="nf">_insert_key_frames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">frame_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Insert key frames for given object pose.</span>
+
+<span class="sd">        :param obj: Loaded object. Type: bpy.types.Object.</span>
+<span class="sd">        :param frame_id: The frame number where key frames should be inserted. Type: int.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">obj</span><span class="o">.</span><span class="n">keyframe_insert</span><span class="p">(</span><span class="n">data_path</span><span class="o">=</span><span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="n">frame_id</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">keyframe_insert</span><span class="p">(</span><span class="n">data_path</span><span class="o">=</span><span class="s1">&#39;rotation_euler&#39;</span><span class="p">,</span> <span class="n">frame</span><span class="o">=</span><span class="n">frame_id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BopLoader._get_ref_cam_extrinsics_intrinsics"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._get_ref_cam_extrinsics_intrinsics">[docs]</a>    <span class="k">def</span> <span class="nf">_get_ref_cam_extrinsics_intrinsics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sc_camera</span><span class="p">,</span> <span class="n">cam_id</span><span class="p">,</span> <span class="n">insts</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get camK and transformation from object instance 0 to camera cam_id as reference.</span>
+
+<span class="sd">        :param sc_camera: BOP scene_camera file. Type: dict.</span>
+<span class="sd">        :param cam_id: BOP camera id. Type: int.</span>
+<span class="sd">        :param insts: Instance from BOP scene_gt file. Type: dict.</span>
+<span class="sd">        :param scale: Factor to transform get pose in mm or meters. Type: int.</span>
+<span class="sd">        :return camK : loaded camera matrix. Type: ndarray.</span>
+<span class="sd">        :return cam_H_m2c_ref: loaded object to camera transformation. Type: ndarray.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cam_K</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sc_camera</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">cam_id</span><span class="p">)][</span><span class="s1">&#39;cam_K&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">cam_H_m2c_ref</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">cam_H_m2c_ref</span><span class="p">[:</span><span class="mi">3</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">insts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;cam_R_m2c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span> 
+        <span class="n">cam_H_m2c_ref</span><span class="p">[:</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">insts</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;cam_t_m2c&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">cam_K</span><span class="p">,</span> <span class="n">cam_H_m2c_ref</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BopLoader._get_loaded_obj"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._get_loaded_obj">[docs]</a>    <span class="k">def</span> <span class="nf">_get_loaded_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the object if it has already been loaded.</span>
+<span class="sd"> </span>
+<span class="sd">        :param model_path: Model path of the new object. Type: string.</span>
+<span class="sd">        :return: Object if found, else return None. Type: bpy.types.Object/None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">loaded_obj</span> <span class="ow">in</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">objects</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;model_path&#39;</span> <span class="ow">in</span> <span class="n">loaded_obj</span> <span class="ow">and</span> <span class="n">loaded_obj</span><span class="p">[</span><span class="s1">&#39;model_path&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">model_path</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">loaded_obj</span>
+        <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="BopLoader._load_mesh"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._load_mesh">[docs]</a>    <span class="k">def</span> <span class="nf">_load_mesh</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj_id</span><span class="p">,</span> <span class="n">model_p</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Loads BOP mesh and sets category_id.</span>
+
+<span class="sd">        :param obj_id: The obj_id of the BOP Object. Type: int.</span>
+<span class="sd">        :param model_p: model parameters defined in dataset_params.py in bop_toolkit. Type: dict.</span>
+<span class="sd">        :return: Current object. Type: bpy.types.Object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">model_path</span> <span class="o">=</span> <span class="n">model_p</span><span class="p">[</span><span class="s1">&#39;model_tpath&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="s1">&#39;obj_id&#39;</span><span class="p">:</span> <span class="n">obj_id</span><span class="p">})</span>
+
+        <span class="n">texture_file_path</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>  <span class="c1"># only needed for ycbv objects</span>
+
+        <span class="c1"># Gets the objects if it is already loaded         </span>
+        <span class="n">cur_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_loaded_obj</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+        <span class="c1"># if the object was not previously loaded - load it, if duplication is allowed - duplicate it</span>
+        <span class="k">if</span> <span class="n">cur_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_external_texture</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_path</span><span class="p">):</span>
+                    <span class="n">new_file_ply_content</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                        <span class="n">new_file_ply_content</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="n">texture_pos</span> <span class="o">=</span> <span class="n">new_file_ply_content</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;comment TextureFile &quot;</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="s2">&quot;comment TextureFile &quot;</span><span class="p">)</span>
+                        <span class="n">texture_file_name</span> <span class="o">=</span> <span class="n">new_file_ply_content</span><span class="p">[</span><span class="n">texture_pos</span><span class="p">:</span>
+                                                                 <span class="n">new_file_ply_content</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">texture_pos</span><span class="p">)]</span>
+                        <span class="n">texture_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">model_path</span><span class="p">),</span> <span class="n">texture_file_name</span><span class="p">)</span>
+                        <span class="n">new_file_ply_content</span> <span class="o">=</span> <span class="n">new_file_ply_content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;property float texture_u&quot;</span><span class="p">,</span>
+                                                                            <span class="s2">&quot;property float s&quot;</span><span class="p">)</span>
+                        <span class="n">new_file_ply_content</span> <span class="o">=</span> <span class="n">new_file_ply_content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;property float texture_v&quot;</span><span class="p">,</span>
+                                                                            <span class="s2">&quot;property float t&quot;</span><span class="p">)</span>
+                    <span class="n">model_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+                    <span class="n">tmp_ply_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">Utility</span><span class="o">.</span><span class="n">get_temporary_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">),</span> <span class="n">model_name</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">tmp_ply_file</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+                        <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">new_file_ply_content</span><span class="p">)</span>
+                    <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">import_mesh</span><span class="o">.</span><span class="n">ply</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">tmp_ply_file</span><span class="p">)</span>
+                    <span class="n">cur_obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">selected_objects</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">import_mesh</span><span class="o">.</span><span class="n">ply</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="n">model_path</span><span class="p">)</span>
+                <span class="n">cur_obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">selected_objects</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_duplication</span><span class="p">:</span>
+            <span class="n">bpy</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">object</span><span class="o">.</span><span class="n">duplicate</span><span class="p">({</span><span class="s2">&quot;object&quot;</span><span class="p">:</span> <span class="n">cur_obj</span><span class="p">,</span> <span class="s2">&quot;selected_objects&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">cur_obj</span><span class="p">]})</span>
+            <span class="n">cur_obj</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">selected_objects</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">cur_obj</span><span class="o">.</span><span class="n">scale</span> <span class="o">=</span> <span class="n">Vector</span><span class="p">((</span><span class="n">scale</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">scale</span><span class="p">))</span>
+        <span class="n">cur_obj</span><span class="p">[</span><span class="s1">&#39;category_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj_id</span>
+        <span class="n">cur_obj</span><span class="p">[</span><span class="s1">&#39;model_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_path</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_has_external_texture</span><span class="p">:</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_materials</span><span class="p">(</span><span class="n">cur_obj</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_link_col_node</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">texture_file_path</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+            <span class="c1"># ycbv objects contain normal image textures, which should be used instead of the vertex colors</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_texture</span><span class="p">(</span><span class="n">cur_obj</span><span class="p">,</span> <span class="n">texture_file_path</span><span class="p">)</span>
+        <span class="n">cur_obj</span><span class="p">[</span><span class="s2">&quot;is_bop_object&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">cur_obj</span><span class="p">[</span><span class="s2">&quot;bop_dataset_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_name</span>
+        <span class="k">return</span> <span class="n">cur_obj</span></div>
+
+<div class="viewcode-block" id="BopLoader._load_materials"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._load_materials">[docs]</a>    <span class="k">def</span> <span class="nf">_load_materials</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur_obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Loads / defines materials, e.g. vertex colors.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cur_obj: The object to use. Type: bpy.types.Object.</span>
+<span class="sd">        :return: Material with vertex color. Type: bpy.types.Material.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">mat</span> <span class="o">=</span> <span class="n">cur_obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Material&quot;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">mat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># create material</span>
+            <span class="n">mat</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bop_&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_name</span> <span class="o">+</span> <span class="s2">&quot;_vertex_col_material&quot;</span><span class="p">)</span>
+
+        <span class="n">mat</span><span class="o">.</span><span class="n">use_nodes</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">cur_obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="p">:</span>
+            <span class="c1"># assign to 1st material slot</span>
+            <span class="n">cur_obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mat</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no slots</span>
+            <span class="n">cur_obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mat</span></div>
+
+<div class="viewcode-block" id="BopLoader._load_texture"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._load_texture">[docs]</a>    <span class="k">def</span> <span class="nf">_load_texture</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur_obj</span><span class="p">,</span> <span class="n">texture_file_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the textures for the ycbv objects, only those contain texture information</span>
+
+<span class="sd">        :param cur_obj: The object to use. Type: bpy.types.Object.</span>
+<span class="sd">        :param texture_file_path: path to the texture file (most likely &quot;.png&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mat</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;bop_&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bop_dataset_name</span> <span class="o">+</span> <span class="s2">&quot;_texture_material&quot;</span><span class="p">)</span>
+
+        <span class="n">mat</span><span class="o">.</span><span class="n">use_nodes</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="n">links</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+
+        <span class="n">color_image</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s1">&#39;ShaderNodeTexImage&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">texture_file_path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;The texture path for the ycbv object could not be loaded from the &quot;</span>
+                            <span class="s2">&quot;file: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">texture_file_path</span><span class="p">))</span>
+        <span class="n">color_image</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">bpy</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">images</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">texture_file_path</span><span class="p">,</span> <span class="n">check_existing</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">principled</span> <span class="o">=</span> <span class="n">Utility</span><span class="o">.</span><span class="n">get_the_one_node_with_type</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;BsdfPrincipled&quot;</span><span class="p">)</span>
+        <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">color_image</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s2">&quot;Color&quot;</span><span class="p">],</span> <span class="n">principled</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;Base Color&quot;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">cur_obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="p">:</span>
+            <span class="c1"># assign to 1st material slot</span>
+            <span class="n">cur_obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">mat</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># no slots</span>
+            <span class="n">cur_obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">materials</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BopLoader._link_col_node"><a class="viewcode-back" href="../../../src.loader.BopLoader.html#src.loader.BopLoader.BopLoader._link_col_node">[docs]</a>    <span class="k">def</span> <span class="nf">_link_col_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mat</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Links a color attribute node to a Principled BSDF node.</span>
+
+<span class="sd">        :param mat: The material to use. Type: bpy.types.Material.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">nodes</span>
+        <span class="n">links</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">node_tree</span><span class="o">.</span><span class="n">links</span>
+
+        <span class="n">attr_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;ShaderNodeAttribute&#39;</span><span class="p">)</span>
+        <span class="n">attr_node</span><span class="o">.</span><span class="n">attribute_name</span> <span class="o">=</span> <span class="s1">&#39;Col&#39;</span>
+
+        <span class="n">principled_node</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Principled BSDF&quot;</span><span class="p">)</span>
+
+        <span class="n">links</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">attr_node</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">&#39;Color&#39;</span><span class="p">],</span> <span class="n">principled_node</span><span class="o">.</span><span class="n">inputs</span><span class="p">[</span><span class="s1">&#39;Base Color&#39;</span><span class="p">])</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

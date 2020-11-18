@@ -1,0 +1,209 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>src.writer.CocoAnnotationsWriter &#8212; BlenderPipeline 1.0.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for src.writer.CocoAnnotationsWriter</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+<span class="kn">import</span> <span class="nn">bpy</span>
+
+<span class="kn">from</span> <span class="nn">src.utility.CocoUtility</span> <span class="kn">import</span> <span class="n">CocoUtility</span>
+<span class="kn">from</span> <span class="nn">src.writer.WriterInterface</span> <span class="kn">import</span> <span class="n">WriterInterface</span>
+
+
+<div class="viewcode-block" id="CocoAnnotationsWriter"><a class="viewcode-back" href="../../../src.writer.CocoAnnotationsWriter.html#src.writer.CocoAnnotationsWriter.CocoAnnotationsWriter">[docs]</a><span class="k">class</span> <span class="nc">CocoAnnotationsWriter</span><span class="p">(</span><span class="n">WriterInterface</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Writes Coco Annotations in to a file.</span>
+
+<span class="sd">    **Configuration**:</span>
+
+<span class="sd">    .. csv-table::</span>
+<span class="sd">       :header: &quot;Parameter&quot;, &quot;Description&quot;</span>
+<span class="sd">       </span>
+<span class="sd">       &quot;avoid_rendering&quot;, &quot;If true, no output is produced. Type: bool. Default: False&quot;</span>
+<span class="sd">       &quot;rgb_output_key&quot;, &quot;The output key with which the rgb images were registered. Should be the same as the &quot;</span>
+<span class="sd">                         &quot;output_key of the RgbRenderer module. Type: string.Default: colors.&quot;</span>
+<span class="sd">       &quot;segmap_output_key&quot;, &quot;The output key with which the segmentation images were registered. Should be the same as &quot;</span>
+<span class="sd">                            &quot;the output_key of the SegMapRenderer module. Type: string. Default: segmap.&quot;</span>
+<span class="sd">       &quot;segcolormap_output_key&quot;, &quot;The output key with which the csv file for object name/class correspondences was &quot;</span>
+<span class="sd">                                 &quot;registered. Should be the same as the colormap_output_key of the SegMapRenderer &quot;</span>
+<span class="sd">                                 &quot;module. Type: string. Default: segcolormap.&quot;</span>
+<span class="sd">       &quot;supercategory&quot;, &quot;Name of the dataset/supercategory to filter for, e.g. a specific BOP dataset.&quot;</span>
+<span class="sd">                        &quot;Type: str. Default: coco_annotations&quot;</span>
+<span class="sd">       &quot;append_to_existing_output&quot;, &quot;If true and if there is already a coco_annotations.json file in the output &quot;</span>
+<span class="sd">                                    &quot;directory, the new coco annotations will be appended to the existing file. Also &quot;</span>
+<span class="sd">                                    &quot;the rgb images will be named such that there are no collisions. Type: bool. &quot;</span>
+<span class="sd">                                    &quot;Default: False.&quot;</span>
+<span class="sd">       &quot;mask_encoding_format&quot;, &quot;Encoding format of the binary masks. &quot;</span>
+<span class="sd">                               &quot;Type: string. Default: &#39;rle&#39;. Available: &#39;rle&#39;, &#39;polygon&#39;.&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">WriterInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_avoid_rendering</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;avoid_rendering&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rgb_output_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;rgb_output_key&quot;</span><span class="p">,</span> <span class="s2">&quot;colors&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_supercategory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;supercategory&quot;</span><span class="p">,</span> <span class="s2">&quot;coco_annotations&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segmap_output_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;segmap_output_key&quot;</span><span class="p">,</span> <span class="s2">&quot;segmap&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segcolormap_output_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;segcolormap_output_key&quot;</span><span class="p">,</span> <span class="s2">&quot;segcolormap&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coco_data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_determine_output_dir</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="s1">&#39;coco_data&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask_encoding_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_string</span><span class="p">(</span><span class="s2">&quot;mask_encoding_format&quot;</span><span class="p">,</span> <span class="s2">&quot;rle&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_coco_data_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_coco_data_dir</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CocoAnnotationsWriter.run"><a class="viewcode-back" href="../../../src.writer.CocoAnnotationsWriter.html#src.writer.CocoAnnotationsWriter.CocoAnnotationsWriter.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Writes coco annotations in the following steps:</span>
+<span class="sd">        1. Locat the seg images</span>
+<span class="sd">        2. Locat the rgb maps</span>
+<span class="sd">        3. Locat the seg maps</span>
+<span class="sd">        4. Read color mappings</span>
+<span class="sd">        5. For each frame write the coco annotation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avoid_rendering</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Avoid rendering is on, no output produced!&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Find path pattern of segmentation images</span>
+        <span class="n">segmentation_map_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_registered_output_by_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segmap_output_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">segmentation_map_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no output registered with key </span><span class="si">{}</span><span class="s2">. Are you sure you ran the SegMapRenderer module &quot;</span>
+                            <span class="s2">&quot;before?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segmap_output_key</span><span class="p">))</span>
+        
+        <span class="c1"># Find path pattern of rgb images</span>
+        <span class="n">rgb_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_registered_output_by_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rgb_output_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rgb_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no output registered with key </span><span class="si">{}</span><span class="s2">. Are you sure you ran the RgbRenderer module &quot;</span>
+                            <span class="s2">&quot;before?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rgb_output_key</span><span class="p">))</span>
+    
+        <span class="c1"># collect all segmaps</span>
+        <span class="n">segmentation_map_paths</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Find path of name class mapping csv file</span>
+        <span class="n">segcolormap_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_registered_output_by_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segcolormap_output_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">segcolormap_output</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no output registered with key </span><span class="si">{}</span><span class="s2">. Are you sure you ran the SegMapRenderer module &quot;</span>
+                            <span class="s2">&quot;with &#39;map_by&#39; set to &#39;instance&#39; before?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">segcolormap_output_key</span><span class="p">))</span>
+
+        <span class="c1"># read colormappings, which include object name/class to integer mapping</span>
+        <span class="n">inst_attribute_maps</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">segcolormap_output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">],</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+            <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">mapping</span> <span class="ow">in</span> <span class="n">reader</span><span class="p">:</span>
+                <span class="n">inst_attribute_maps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+
+        <span class="n">coco_annotations_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_coco_data_dir</span><span class="p">,</span> <span class="s2">&quot;coco_annotations.json&quot;</span><span class="p">)</span>
+        <span class="c1"># Calculate image numbering offset, if append_to_existing_output is activated and coco data exists</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">get_bool</span><span class="p">(</span><span class="s2">&quot;append_to_existing_output&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">coco_annotations_path</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">coco_annotations_path</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                <span class="n">existing_coco_annotations</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+            <span class="n">image_offset</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">image</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">existing_coco_annotations</span><span class="p">[</span><span class="s2">&quot;images&quot;</span><span class="p">]])</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">image_offset</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">existing_coco_annotations</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># collect all RGB paths</span>
+        <span class="n">new_coco_image_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># for each rendered frame</span>
+        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_start</span><span class="p">,</span> <span class="n">bpy</span><span class="o">.</span><span class="n">context</span><span class="o">.</span><span class="n">scene</span><span class="o">.</span><span class="n">frame_end</span><span class="p">):</span>
+            <span class="n">segmentation_map_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">segmentation_map_output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">%</span> <span class="n">frame</span><span class="p">)</span>
+
+            <span class="n">source_path</span> <span class="o">=</span> <span class="n">rgb_output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">%</span> <span class="n">frame</span>
+            <span class="n">target_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_coco_data_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">rgb_output</span><span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]</span> <span class="o">%</span> <span class="p">(</span><span class="n">frame</span> <span class="o">+</span> <span class="n">image_offset</span><span class="p">)))</span>
+
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">source_path</span><span class="p">,</span> <span class="n">target_path</span><span class="p">)</span>
+            <span class="n">new_coco_image_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">target_path</span><span class="p">))</span>
+
+        <span class="n">coco_output</span> <span class="o">=</span> <span class="n">CocoUtility</span><span class="o">.</span><span class="n">generate_coco_annotations</span><span class="p">(</span><span class="n">segmentation_map_paths</span><span class="p">,</span>
+                                                            <span class="n">new_coco_image_paths</span><span class="p">,</span>
+                                                            <span class="n">inst_attribute_maps</span><span class="p">,</span>
+                                                            <span class="bp">self</span><span class="o">.</span><span class="n">_supercategory</span><span class="p">,</span>
+                                                            <span class="bp">self</span><span class="o">.</span><span class="n">mask_encoding_format</span><span class="p">,</span>
+                                                            <span class="n">existing_coco_annotations</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Writing coco annotations to &quot;</span> <span class="o">+</span> <span class="n">coco_annotations_path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">coco_annotations_path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">coco_output</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2019, DLR RMC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
