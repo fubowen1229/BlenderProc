@@ -8,7 +8,7 @@ A procedural Blender pipeline for photorealistic training image generation.
 
 Check out our [arXiv paper](https://arxiv.org/abs/1911.01911) (we are updating it from time to time) and our [workshop paper](https://sim2real.github.io/assets/papers/2020/denninger.pdf) on sim2real transfer presented at RSS 2020.
 
-## Update
+## Update (Mostly in BOP)
 
 by **Fu Bowen**
 
@@ -21,6 +21,8 @@ by **Fu Bowen**
 ### Note
 
 1.Check intersection: `utility.BlenderUtility` Line 98  
+2.Flow chart:  
+run.py --> src/run --> main.Pipeline --> loader/BopLoader & writer.BopWriter ...
 
 ## Overview Video
 
